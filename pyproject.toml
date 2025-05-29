@@ -1,0 +1,57 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pysurv"
+version = "0.1.0"
+description = "Ordinary, weighted, and robust least squares adjustment of surveying control networks"
+authors = [
+    {name = "Michał Prędki"}
+]
+license = {text = "GPL-3.0"}
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "numpy>=2.2",
+    "pandas>=2.2",
+    "geopandas>=1.0"
+]
+
+[project.optional-dependencies]
+dev = [
+    "black",
+    "isort",
+    "pytest",
+    "pytest-cov"
+]
+
+[project.urls]
+Repository = "https://github.com/mpredki99/pysurv"
+
+[tool.black]
+line-length = 88
+target-version = ['py310', 'py311', 'py312', 'py313']
+
+[tool.isort]
+profile = "black"
+line_length = 88
+known_first_party = ["pysurv"]
+src_paths = ["src"]
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-ra -q"
+testpaths = [
+    "tests",
+]
+
+[tool.coverage.run]
+branch = true
+source = [
+    "src/pysurv"
+]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false
