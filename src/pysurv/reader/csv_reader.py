@@ -40,13 +40,19 @@ class CSVReader(BaseReader):
             self._validate_data("Measurements")
 
     def _fill_empty_stn_labels(self):
-        stn_iloc = self._stations["stn_iloc"].to_numpy()
-        repeats = np.diff(np.append(stn_iloc, len(self._measurements)))
-        sequence = np.repeat(stn_iloc, repeats)
-        self._measurements.insert(loc=0, column="stn_iloc", value=sequence)
+        if "stn_h" in self._stations.columns:
+            self._measurements.fillna({"stn_h": 0}, inplace=True)
+            self._measurements = self._measurements.merge(self._stations, left_on=["stn_id", "stn_h"], right_on=["stn_id", "stn_h"], how="left")
+        else:
+            self._measurements = self._measurements.merge(self._stations, left_on="stn_id", right_on="stn_id", how="left")
+        
+        self._measurements.loc[: "stn_iloc"] = self._measurements.loc[: "stn_iloc"].ffill()
+        self._measurements["stn_iloc"] = self._measurements["stn_iloc"].astype(int)
         self._measurements.drop(
             columns=["stn_id", "stn_h"], errors="ignore", inplace=True
         )
+        stn_iloc = self._measurements.pop("stn_iloc") 
+        self._measurements.insert(0, "stn_iloc", stn_iloc)
 
     # CONTROLS DATASET METHODS
     def read_controls(self):
@@ -85,7 +91,7 @@ class CSVReader(BaseReader):
             self._stations = self._measurements["stn_id"].dropna().to_frame()
         else:
             self._stations = (
-                self._measurements[["stn_id", "stn_h"]].dropna(how="all").fillna(0)
+                self._measurements[["stn_id", "stn_h"]].dropna(how="all").fillna({"stn_h": 0})
             )
 
         self._standardize_stations_columns_names()
