@@ -104,9 +104,6 @@ class BaseReader(ABC):
         dataset = self.get_dataset(dataset_name)
         model = models.get(dataset_name)
 
-        if dataset.empty or dataset is None:
-            raise EmptyDatasetError(f"{dataset_name} dataset is empty.")
-
         for row_idx, row in enumerate(dataset.itertuples(index=False)):
             try:
                 model(**row._asdict())
@@ -122,3 +119,5 @@ class BaseReader(ABC):
             print(message + "\nInvalid rows were skipped.")
             invalid_row_indices = dataset.iloc[list(errors.keys())].index
             dataset.drop(index=invalid_row_indices, inplace=True)
+        if dataset.empty or dataset is None:
+            raise EmptyDatasetError(f"{dataset_name} dataset is empty.")
