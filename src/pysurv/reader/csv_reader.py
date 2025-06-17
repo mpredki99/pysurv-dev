@@ -34,12 +34,12 @@ class CSVReader(BaseReader):
 
         self.read_stations()
 
-        self._fill_empty_stn_labels()
+        self._insert_stn_iloc()
 
         if self._validation_mode in ["raise", "skip"]:
             self._validate_data("Measurements")
 
-    def _fill_empty_stn_labels(self):
+    def _insert_stn_iloc(self):
         if "stn_h" in self._stations.columns:
             self._measurements.fillna({"stn_h": 0}, inplace=True)
             self._measurements = self._measurements.merge(self._stations, left_on=["stn_id", "stn_h"], right_on=["stn_id", "stn_h"], how="left")
