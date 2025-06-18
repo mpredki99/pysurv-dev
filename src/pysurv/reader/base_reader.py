@@ -4,7 +4,7 @@ from pprint import pformat
 from pydantic import ValidationError
 import numpy as np
 
-from .models import ControlPoint, Measurement, Station
+from pysurv.models.models import ControlPoint, Measurement, Station
 from pysurv.exceptions.exceptions import (
     EmptyDatasetError,
     InvalidDataError,
