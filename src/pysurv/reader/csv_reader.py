@@ -30,7 +30,7 @@ class CSVReader(BaseReader):
         self._measurements.columns = self._measurements.columns.str.lower()
 
         self._validate_mandatory_columns("Measurements")
-        self._filter_columns("Measurements")
+        self._measurements = self._filter_columns("Measurements")
 
         self.read_stations()
 
@@ -41,13 +41,27 @@ class CSVReader(BaseReader):
 
     def _insert_stn_pk(self):
         self._measurements.insert(0, "meas_iloc", np.arange(len(self._measurements)))
-        self._measurements = self._measurements.merge(self._stations, left_on="meas_iloc", right_on="stn_pk", how="left", suffixes=["_measurements", "_stations"])
-        
-        self._measurements.loc[: "stn_pk"] = self._measurements.loc[: "stn_pk"].ffill()
-        self._measurements.drop(
-            columns=["stn_id_measurements", "stn_id_stations", "stn_h_measurements", "stn_h_stations", "meas_iloc"], errors="ignore", inplace=True
+        self._measurements = self._measurements.merge(
+            self._stations,
+            left_on="meas_iloc",
+            right_on="stn_pk",
+            how="left",
+            suffixes=["_measurements", "_stations"],
         )
-        stn_pk = self._measurements.pop("stn_pk") 
+
+        self._measurements.loc[:"stn_pk"] = self._measurements.loc[:"stn_pk"].ffill()
+        self._measurements.drop(
+            columns=[
+                "stn_id_measurements",
+                "stn_id_stations",
+                "stn_h_measurements",
+                "stn_h_stations",
+                "meas_iloc",
+            ],
+            errors="ignore",
+            inplace=True,
+        )
+        stn_pk = self._measurements.pop("stn_pk")
         self._measurements.insert(0, "stn_pk", stn_pk.astype(int))
 
     # CONTROLS DATASET METHODS
@@ -87,7 +101,9 @@ class CSVReader(BaseReader):
             self._stations = self._measurements["stn_id"].dropna().to_frame()
         else:
             self._stations = (
-                self._measurements[["stn_id", "stn_h"]].dropna(how="all").fillna({"stn_h": 0})
+                self._measurements[["stn_id", "stn_h"]]
+                .dropna(how="all")
+                .fillna({"stn_h": 0})
             )
 
         self._standardize_stations_columns_names()
