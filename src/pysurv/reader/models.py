@@ -4,7 +4,7 @@ from pydantic import BaseModel, Field, field_validator
 
 
 class Measurement(BaseModel):
-    stn_iloc: int
+    stn_pk: int
     trg_id: str
     trg_h: float | None = None
     sd: float | None = Field(default=None, ge=0)
