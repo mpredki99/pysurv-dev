@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from pprint import pformat
 
 from pydantic import ValidationError
+import numpy as np
 
 from .models import ControlPoint, Measurement, Station
 from pysurv.exceptions.exceptions import (
@@ -109,6 +110,13 @@ class BaseReader(ABC):
                 model(**row._asdict())
             except ValidationError as e:
                 errors.update({row_idx: e})
+                
+                if self._validation_mode == "skip": 
+                    col_idx = [
+                        dataset.columns.get_loc(error.get("loc")[0])
+                        for error in e.errors()
+                    ]
+                    dataset.iloc[row_idx, col_idx] = np.nan
 
         message = (
             f"Validation errors in {dataset_name} dataset:\n{pformat(errors, indent=0)}"
@@ -116,8 +124,7 @@ class BaseReader(ABC):
         if errors and self._validation_mode == "raise":
             raise InvalidDataError(message)
         elif errors and self._validation_mode == "skip":
-            print(message + "\nInvalid rows were skipped.")
+            print(message + "\nInvalid values  were skipped.")
             invalid_row_indices = dataset.iloc[list(errors.keys())].index
-            dataset.drop(index=invalid_row_indices, inplace=True)
         if dataset.empty or dataset is None:
             raise EmptyDatasetError(f"{dataset_name} dataset is empty.")
