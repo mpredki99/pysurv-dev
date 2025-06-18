@@ -34,25 +34,21 @@ class CSVReader(BaseReader):
 
         self.read_stations()
 
-        self._insert_stn_iloc()
+        self._insert_stn_pk()
 
         if self._validation_mode in ["raise", "skip"]:
             self._validate_data("Measurements")
 
-    def _insert_stn_iloc(self):
-        if "stn_h" in self._stations.columns:
-            self._measurements.fillna({"stn_h": 0}, inplace=True)
-            self._measurements = self._measurements.merge(self._stations, left_on=["stn_id", "stn_h"], right_on=["stn_id", "stn_h"], how="left")
-        else:
-            self._measurements = self._measurements.merge(self._stations, left_on="stn_id", right_on="stn_id", how="left")
+    def _insert_stn_pk(self):
+        self._measurements.insert(0, "meas_iloc", np.arange(len(self._measurements)))
+        self._measurements = self._measurements.merge(self._stations, left_on="meas_iloc", right_on="stn_pk", how="left", suffixes=["_measurements", "_stations"])
         
-        self._measurements.loc[: "stn_iloc"] = self._measurements.loc[: "stn_iloc"].ffill()
-        self._measurements["stn_iloc"] = self._measurements["stn_iloc"].astype(int)
+        self._measurements.loc[: "stn_pk"] = self._measurements.loc[: "stn_pk"].ffill()
         self._measurements.drop(
-            columns=["stn_id", "stn_h"], errors="ignore", inplace=True
+            columns=["stn_id_measurements", "stn_id_stations", "stn_h_measurements", "stn_h_stations", "meas_iloc"], errors="ignore", inplace=True
         )
-        stn_iloc = self._measurements.pop("stn_iloc") 
-        self._measurements.insert(0, "stn_iloc", stn_iloc)
+        stn_pk = self._measurements.pop("stn_pk") 
+        self._measurements.insert(0, "stn_pk", stn_pk.astype(int))
 
     # CONTROLS DATASET METHODS
     def read_controls(self):
@@ -102,5 +98,5 @@ class CSVReader(BaseReader):
             self._validate_data("Stations")
 
     def _standardize_stations_columns_names(self):
-        self._stations.rename_axis("stn_iloc", inplace=True)
+        self._stations.rename_axis("stn_pk", inplace=True)
         self._stations.reset_index(inplace=True)

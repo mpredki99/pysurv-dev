@@ -70,7 +70,7 @@ class BaseReader(ABC):
             "Controls": ControlPoint.COLUMN_LABELS["point_label"]
             + ControlPoint.COLUMN_LABELS["coordinates"]
             + ControlPoint.COLUMN_LABELS["sigma"],
-            "Stations": Station.COLUMN_LABELS["station_iloc"]
+            "Stations": Station.COLUMN_LABELS["station_key"]
             + Station.COLUMN_LABELS["point_label"]
             + Station.COLUMN_LABELS["station_height"],
         }
@@ -84,7 +84,7 @@ class BaseReader(ABC):
         mandatory_columns_dict = {
             "Measurements": Measurement.COLUMN_LABELS["points"],
             "Controls": ControlPoint.COLUMN_LABELS["point_label"],
-            "Stations": Station.COLUMN_LABELS["station_iloc"]
+            "Stations": Station.COLUMN_LABELS["station_key"]
             + Station.COLUMN_LABELS["point_label"],
         }
         dataset = self.get_dataset(dataset_name)

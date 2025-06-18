@@ -61,12 +61,12 @@ class ControlPoint(BaseModel):
 
 
 class Station(BaseModel):
-    stn_iloc: int
+    stn_pk: int
     stn_id: str
     stn_h: float | None = None
 
     COLUMN_LABELS: ClassVar[dict] = {
-        "station_iloc": ["stn_iloc"],
+        "station_key": ["stn_pk"],
         "point_label": ["stn_id"],
         "station_height": ["stn_h"],
     }
