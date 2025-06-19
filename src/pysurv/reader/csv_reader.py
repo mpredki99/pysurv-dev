@@ -52,7 +52,7 @@ class CSVReader(BaseReader):
             suffixes=["_measurements", "_stations"],
         )
 
-        self._measurements.loc[:"stn_pk"] = self._measurements.loc[:"stn_pk"].ffill()
+        self._measurements["stn_pk"] = self._measurements["stn_pk"].ffill()
         self._measurements.drop(
             columns=[
                 "stn_id_measurements",
