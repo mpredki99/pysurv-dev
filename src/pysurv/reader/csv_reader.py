@@ -9,7 +9,7 @@ from .base_reader import BaseReader
 class CSVReader(BaseReader):
 
     def __init__(
-        self, measurements_file_path, controls_file_path, validation_mode="raise"
+        self, measurements_file_path, controls_file_path, validation_mode="raise", delimiter=None, decimal='.'
     ):
         super().__init__(validation_mode)
 
@@ -18,6 +18,9 @@ class CSVReader(BaseReader):
 
         self.validate_file_path(controls_file_path, "Controls")
         self._controls_file_path = controls_file_path
+        
+        self.delimiter = delimiter
+        self.decimal = decimal
 
     def validate_file_path(self, file_path, dataset_name):
         if not os.path.exists(file_path):
@@ -25,7 +28,7 @@ class CSVReader(BaseReader):
 
     # MEASUREMENTS DATASET METHODS
     def read_measurements(self):
-        self._measurements = pd.read_csv(self._measurements_file_path)
+        self._measurements = pd.read_csv(self._measurements_file_path, delimiter=self.delimiter, decimal=self.decimal)
 
         self._measurements.columns = self._measurements.columns.str.lower()
 
@@ -66,7 +69,7 @@ class CSVReader(BaseReader):
 
     # CONTROLS DATASET METHODS
     def read_controls(self):
-        self._controls = pd.read_csv(self._controls_file_path)
+        self._controls = pd.read_csv(self._controls_file_path, delimiter=self.delimiter, decimal=self.decimal)
         self._controls.columns = self._controls.columns.str.lower()
         self._standardize_control_columns_names()
         self._validate_mandatory_columns("Controls")
