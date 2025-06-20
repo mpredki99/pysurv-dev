@@ -1,5 +1,7 @@
 from typing import ClassVar
 
+import numpy as np
+
 from pydantic import BaseModel, Field, field_validator
 
 
@@ -7,30 +9,45 @@ class Measurement(BaseModel):
     stn_pk: int
     trg_id: str
     trg_h: float | None = None
-    sd: float | None = Field(default=None, ge=0)
-    hd: float | None = Field(default=None, ge=0)
+    trg_sh: float | None = Field(default=None, description="Standard deviation in trg_h.")
+    sd: float | None = Field(default=None, description="Slope distance.")
+    hd: float | None = Field(default=None, description="Horizontal distance.")
     vd: float | None = None
     dx: float | None = None
     dy: float | None = None
     dz: float | None = None
-    ssd: float | None = Field(default=None, ge=0)
-    shd: float | None = Field(default=None, ge=0)
-    svd: float | None = Field(default=None, ge=0)
-    sdx: float | None = Field(default=None, ge=0)
-    sdy: float | None = Field(default=None, ge=0)
-    sdz: float | None = Field(default=None, ge=0)
+    ssd: float | None = Field(default=None, description="Standard deviation in sd.")
+    shd: float | None = Field(default=None, description="Standard deviation in hd.")
+    svd: float | None = Field(default=None, description="Standard deviation in vd.")
+    sdx: float | None = Field(default=None, description="Standard deviation in dx.")
+    sdy: float | None = Field(default=None, description="Standard deviation in dy.")
+    sdz: float | None = Field(default=None, description="Standard deviation in dz.")
     a: float | None = None
     hz: float | None = None
     vz: float | None = None
     vh: float | None = None
-    sa: float | None = Field(default=None, ge=0)
-    shz: float | None = Field(default=None, ge=0)
-    svz: float | None = Field(default=None, ge=0)
-    svh: float | None = Field(default=None, ge=0)
+    sa: float | None = Field(default=None, description="Standard deviation in a.")
+    shz: float | None = Field(default=None, description="Standard deviation in hz.")
+    svz: float | None = Field(default=None, description="Standard deviation in vz.")
+    svh: float | None = Field(default=None, description="Standard deviation in vh.")
+    
+    @field_validator("trg_sh", "ssd", "shd", "svd", "sdx", "sdy", "sdz", "sa", "shz", "svz", "svh")
+    def check_sigma(cls, v):
+        if not (v is None or np.isnan(v)) and not v >= 0:
+            raise ValueError("Sigma values must be >= 0.")
+        return v
+    
+    @field_validator("sd", "hd")
+    def check_distance(cls, v):
+        if not (v is None or np.isnan(v)) and not v >= 0:
+            raise ValueError("Distance values must be >= 0.")
+        return v
 
     COLUMN_LABELS: ClassVar[dict] = {
+        "station_key": ["stn_pk"],
         "points": ["stn_id", "trg_id"],
         "points_height": ["stn_h", "trg_h"],
+        "points_height_sigma": ["stn_sh", "trg_sh"],
         "linear_measurements": ["sd", "hd", "vd", "dx", "dy", "dz"],
         "linear_measurements_sigma": ["ssd", "shd", "svd", "sdx", "sdy", "sdz"],
         "angular_measurements": ["a", "hz", "vz", "vh"],
@@ -49,7 +66,7 @@ class ControlPoint(BaseModel):
 
     @field_validator("sx", "sy", "sz")
     def check_sigma(cls, v):
-        if v is not None and not (v >= 0 or v == -1):
+        if not (v is None or np.isnan(v)) and not (v >= 0 or v == -1):
             raise ValueError("Sigma values must be >= 0 or -1.")
         return v
 
@@ -64,9 +81,17 @@ class Station(BaseModel):
     stn_pk: int
     stn_id: str
     stn_h: float | None = None
+    stn_sh: float | None = Field(default=None, description="Standard deviation in stn_h.")
 
     COLUMN_LABELS: ClassVar[dict] = {
         "station_key": ["stn_pk"],
         "point_label": ["stn_id"],
         "station_height": ["stn_h"],
+        "station_height_sigma": ["stn_sh"],
     }
+    
+    @field_validator("stn_sh")
+    def check_sigma(cls, v):
+        if not (v is None or np.isnan(v)) and not v >= 0:
+            raise ValueError("Sigma values must be >= 0.")
+        return v

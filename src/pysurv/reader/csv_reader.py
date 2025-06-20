@@ -31,12 +31,10 @@ class CSVReader(BaseReader):
         self._measurements = pd.read_csv(self._measurements_file_path, delimiter=self.delimiter, decimal=self.decimal)
 
         self._measurements.columns = self._measurements.columns.str.lower()
-
         self._validate_mandatory_columns("Measurements")
         self._measurements = self._filter_columns("Measurements")
 
         self.read_stations()
-
         self._insert_stn_pk()
 
         if self._validation_mode in ["raise", "skip"]:
@@ -100,14 +98,11 @@ class CSVReader(BaseReader):
 
     # STATIONS DATASET METHODS
     def read_stations(self):
-        if "stn_h" not in self._measurements.columns:
-            self._stations = self._measurements["stn_id"].dropna().to_frame()
-        else:
-            self._stations = (
-                self._measurements[["stn_id", "stn_h"]]
-                .dropna(how="all")
-                .fillna({"stn_h": 0})
-            )
+        stn_columns = self._measurements.columns[self._measurements.columns.isin(["stn_id", "stn_h", "stn_sh"])]
+        self._stations = self._measurements[stn_columns].copy()
+        self._stations.dropna(how='all', inplace=True)
+        self._stations.fillna({"stn_h": 0}, inplace=True)
+        self._stations["stn_id"] = self._stations["stn_id"].ffill()
 
         self._standardize_stations_columns_names()
         self._validate_mandatory_columns("Stations")

@@ -62,8 +62,10 @@ class BaseReader(ABC):
     # Datasets filter
     def _filter_columns(self, dataset_name):
         acceptable_columns_dict = {
-            "Measurements": Measurement.COLUMN_LABELS["points"]
+            "Measurements": Measurement.COLUMN_LABELS["station_key"]
+            + Measurement.COLUMN_LABELS["points"]
             + Measurement.COLUMN_LABELS["points_height"]
+            + Measurement.COLUMN_LABELS["points_height_sigma"]
             + Measurement.COLUMN_LABELS["linear_measurements"]
             + Measurement.COLUMN_LABELS["linear_measurements_sigma"]
             + Measurement.COLUMN_LABELS["angular_measurements"]
@@ -116,7 +118,7 @@ class BaseReader(ABC):
                         dataset.columns.get_loc(error.get("loc")[0])
                         for error in e.errors()
                     ]
-                    dataset.iloc[row_idx, col_idx] = np.nan
+                    dataset.iloc[row_idx, col_idx] = None
 
         message = (
             f"Validation errors in {dataset_name} dataset:\n{pformat(errors, indent=0)}"
