@@ -5,11 +5,13 @@ import numpy as np
 from pydantic import BaseModel, Field, field_validator
 
 
-class Measurement(BaseModel):
+class MeasurementModel(BaseModel):
     stn_pk: int
     trg_id: str
     trg_h: float | None = None
-    trg_sh: float | None = Field(default=None, description="Standard deviation in trg_h.")
+    trg_sh: float | None = Field(
+        default=None, description="Standard deviation in trg_h."
+    )
     sd: float | None = Field(default=None, description="Slope distance.")
     hd: float | None = Field(default=None, description="Horizontal distance.")
     vd: float | None = None
@@ -30,13 +32,15 @@ class Measurement(BaseModel):
     shz: float | None = Field(default=None, description="Standard deviation in hz.")
     svz: float | None = Field(default=None, description="Standard deviation in vz.")
     svh: float | None = Field(default=None, description="Standard deviation in vh.")
-    
-    @field_validator("trg_sh", "ssd", "shd", "svd", "sdx", "sdy", "sdz", "sa", "shz", "svz", "svh")
+
+    @field_validator(
+        "trg_sh", "ssd", "shd", "svd", "sdx", "sdy", "sdz", "sa", "shz", "svz", "svh"
+    )
     def check_sigma(cls, v):
         if not (v is None or np.isnan(v)) and not v >= 0:
             raise ValueError("Sigma values must be >= 0.")
         return v
-    
+
     @field_validator("sd", "hd")
     def check_distance(cls, v):
         if not (v is None or np.isnan(v)) and not v >= 0:
@@ -55,7 +59,7 @@ class Measurement(BaseModel):
     }
 
 
-class ControlPoint(BaseModel):
+class ControlPointModel(BaseModel):
     id: str
     x: float | None = None
     y: float | None = None
@@ -77,11 +81,13 @@ class ControlPoint(BaseModel):
     }
 
 
-class Station(BaseModel):
+class StationModel(BaseModel):
     stn_pk: int
     stn_id: str
     stn_h: float | None = None
-    stn_sh: float | None = Field(default=None, description="Standard deviation in stn_h.")
+    stn_sh: float | None = Field(
+        default=None, description="Standard deviation in stn_h."
+    )
 
     COLUMN_LABELS: ClassVar[dict] = {
         "station_key": ["stn_pk"],
@@ -89,7 +95,7 @@ class Station(BaseModel):
         "station_height": ["stn_h"],
         "station_height_sigma": ["stn_sh"],
     }
-    
+
     @field_validator("stn_sh")
     def check_sigma(cls, v):
         if not (v is None or np.isnan(v)) and not v >= 0:

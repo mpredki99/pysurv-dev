@@ -4,7 +4,7 @@ from pprint import pformat
 from pydantic import ValidationError
 import numpy as np
 
-from pysurv.models.models import ControlPoint, Measurement, Station
+from pysurv.models.models import ControlPointModel, MeasurementModel, StationModel
 from pysurv.exceptions.exceptions import (
     EmptyDatasetError,
     InvalidDataError,
@@ -62,20 +62,20 @@ class BaseReader(ABC):
     # Datasets filter
     def _filter_columns(self, dataset_name):
         acceptable_columns_dict = {
-            "Measurements": Measurement.COLUMN_LABELS["station_key"]
-            + Measurement.COLUMN_LABELS["points"]
-            + Measurement.COLUMN_LABELS["points_height"]
-            + Measurement.COLUMN_LABELS["points_height_sigma"]
-            + Measurement.COLUMN_LABELS["linear_measurements"]
-            + Measurement.COLUMN_LABELS["linear_measurements_sigma"]
-            + Measurement.COLUMN_LABELS["angular_measurements"]
-            + Measurement.COLUMN_LABELS["angular_measurements_sigma"],
-            "Controls": ControlPoint.COLUMN_LABELS["point_label"]
-            + ControlPoint.COLUMN_LABELS["coordinates"]
-            + ControlPoint.COLUMN_LABELS["sigma"],
-            "Stations": Station.COLUMN_LABELS["station_key"]
-            + Station.COLUMN_LABELS["point_label"]
-            + Station.COLUMN_LABELS["station_height"],
+            "Measurements": MeasurementModel.COLUMN_LABELS["station_key"]
+            + MeasurementModel.COLUMN_LABELS["points"]
+            + MeasurementModel.COLUMN_LABELS["points_height"]
+            + MeasurementModel.COLUMN_LABELS["points_height_sigma"]
+            + MeasurementModel.COLUMN_LABELS["linear_measurements"]
+            + MeasurementModel.COLUMN_LABELS["linear_measurements_sigma"]
+            + MeasurementModel.COLUMN_LABELS["angular_measurements"]
+            + MeasurementModel.COLUMN_LABELS["angular_measurements_sigma"],
+            "Controls": ControlPointModel.COLUMN_LABELS["point_label"]
+            + ControlPointModel.COLUMN_LABELS["coordinates"]
+            + ControlPointModel.COLUMN_LABELS["sigma"],
+            "Stations": StationModel.COLUMN_LABELS["station_key"]
+            + StationModel.COLUMN_LABELS["point_label"]
+            + StationModel.COLUMN_LABELS["station_height"],
         }
         acceptable_columns_list = acceptable_columns_dict.get(dataset_name)
         dataset = self.get_dataset(dataset_name)
@@ -85,10 +85,10 @@ class BaseReader(ABC):
     # Datasets validators
     def _validate_mandatory_columns(self, dataset_name):
         mandatory_columns_dict = {
-            "Measurements": Measurement.COLUMN_LABELS["points"],
-            "Controls": ControlPoint.COLUMN_LABELS["point_label"],
-            "Stations": Station.COLUMN_LABELS["station_key"]
-            + Station.COLUMN_LABELS["point_label"],
+            "Measurements": MeasurementModel.COLUMN_LABELS["points"],
+            "Controls": ControlPointModel.COLUMN_LABELS["point_label"],
+            "Stations": StationModel.COLUMN_LABELS["station_key"]
+            + StationModel.COLUMN_LABELS["point_label"],
         }
         dataset = self.get_dataset(dataset_name)
         mandatory_columns_set = set(mandatory_columns_dict.get(dataset_name))
@@ -99,9 +99,9 @@ class BaseReader(ABC):
 
     def _validate_data(self, dataset_name):
         models = {
-            "Measurements": Measurement,
-            "Controls": ControlPoint,
-            "Stations": Station,
+            "Measurements": MeasurementModel,
+            "Controls": ControlPointModel,
+            "Stations": StationModel,
         }
         errors = {}
         dataset = self.get_dataset(dataset_name)
@@ -112,8 +112,8 @@ class BaseReader(ABC):
                 model(**row._asdict())
             except ValidationError as e:
                 errors.update({row_idx: e})
-                
-                if self._validation_mode == "skip": 
+
+                if self._validation_mode == "skip":
                     col_idx = [
                         dataset.columns.get_loc(error.get("loc")[0])
                         for error in e.errors()
