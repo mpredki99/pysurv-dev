@@ -233,7 +233,7 @@ class TestCSVReader:
         )
         skip_reader.read_measurements()
         assert not skip_reader.get_measurements().empty
-        assert skip_reader.get_measurements().isna().sum().sum() == 4
+        assert skip_reader.get_measurements().isna().sum().sum() == 5
 
         raise_reader = CSVReader(invalid_measurements_file, valid_controls_file)
         with pytest.raises(InvalidDataError):
