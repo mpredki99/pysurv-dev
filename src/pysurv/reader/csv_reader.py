@@ -57,6 +57,8 @@ class CSVReader(BaseReader):
                 "stn_id_stations",
                 "stn_h_measurements",
                 "stn_h_stations",
+                "stn_sh_measurements",
+                "stn_sh_stations",
                 "meas_iloc",
             ],
             errors="ignore",
