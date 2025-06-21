@@ -1,8 +1,5 @@
+from pysurv import reader
+from pysurv import data
 from pysurv.data import Dataset
 
-from pysurv import reader
-
-__all__ = [
-    "Dataset",
-    "reader",
-]
+__all__ = ["data", "Dataset", "reader"]
