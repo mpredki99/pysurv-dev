@@ -41,15 +41,15 @@ class Dataset:
         stations = Stations(reader.get_stations())
 
         return cls(measurements, controls, stations)
-    
+
     @property
     def measurements(self):
-        return self._measurements  
+        return self._measurements
 
     @property
     def measurements_view(self):
         return self._join_measurements_with_stations(self._measurements.display())
-    
+
     @property
     def measurements_view_rad(self):
         return self._join_measurements_with_stations(self._measurements.copy())
@@ -68,12 +68,12 @@ class Dataset:
             if index_name in joined_view.index.names
         ]
 
-        return joined_view.reorder_levels(index_names_sorted, axis=0)     
+        return joined_view.reorder_levels(index_names_sorted, axis=0)
 
     @property
     def controls(self):
         return self._controls
-    
+
     @property
     def stations(self):
         return self._stations

@@ -4,12 +4,12 @@ import tempfile
 import pandas as pd
 import pytest
 
-from pysurv.reader.csv_reader import CSVReader
 from pysurv.exceptions.exceptions import (
-    InvalidDataError,
     EmptyDatasetError,
+    InvalidDataError,
     MissingMandatoryColumnsError,
 )
+from pysurv.reader.csv_reader import CSVReader
 
 # Test data
 VALID_MEASUREMENTS_DATA = {
@@ -101,7 +101,8 @@ def empty_file():
             empty_file, index=False
         )
         yield empty_file
-        
+
+
 @pytest.fixture
 def temp_dir():
     with tempfile.TemporaryDirectory() as temp_dir:
@@ -140,11 +141,9 @@ class TestCSVReader:
         with pytest.raises(FileNotFoundError) as e_info:
             reader = CSVReader(valid_measurements_file, "invalid/path/controls.csv")
         assert "Controls file not found:" in str(e_info.value)
-        
+
     def test_column_name_standarization(self, temp_dir):
-        measurements_file_path = os.path.join(
-            temp_dir, "no_columns_measurements.csv"
-        )
+        measurements_file_path = os.path.join(temp_dir, "no_columns_measurements.csv")
         pd.DataFrame(VALID_MEASUREMENTS_DATA).to_csv(
             measurements_file_path,
             index=False,
@@ -165,28 +164,37 @@ class TestCSVReader:
         pd.DataFrame(VALID_CONTROLS_DATA).to_csv(
             controls_file_path,
             index=False,
-            header=["NR", "EASTING", "NORTHING", "ELEVATION", "SE", "SN", "SEL", "UNNECESARY"]
+            header=[
+                "NR",
+                "EASTING",
+                "NORTHING",
+                "ELEVATION",
+                "SE",
+                "SN",
+                "SEL",
+                "UNNECESARY",
+            ],
         )
 
         reader = CSVReader(measurements_file_path, controls_file_path)
         reader.read_measurements()
         reader.read_controls()
-        
-        assert 'stn_pk' in reader._measurements.columns
-        assert 'trg_id' in reader._measurements.columns
-        assert 'trg_h' in reader._measurements.columns
-        assert 'sd' in reader._measurements.columns
-        assert 'hz' in reader._measurements.columns
-        assert 'shz' in reader._measurements.columns
-        assert 'vd' in reader._measurements.columns
-        
-        assert 'id' in reader._controls.columns
-        assert 'x' in reader._controls.columns
-        assert 'y' in reader._controls.columns
-        assert 'z' in reader._controls.columns
-        assert 'sx' in reader._controls.columns
-        assert 'sy' in reader._controls.columns
-        assert 'sz' in reader._controls.columns
+
+        assert "stn_pk" in reader._measurements.columns
+        assert "trg_id" in reader._measurements.columns
+        assert "trg_h" in reader._measurements.columns
+        assert "sd" in reader._measurements.columns
+        assert "hz" in reader._measurements.columns
+        assert "shz" in reader._measurements.columns
+        assert "vd" in reader._measurements.columns
+
+        assert "id" in reader._controls.columns
+        assert "x" in reader._controls.columns
+        assert "y" in reader._controls.columns
+        assert "z" in reader._controls.columns
+        assert "sx" in reader._controls.columns
+        assert "sy" in reader._controls.columns
+        assert "sz" in reader._controls.columns
 
     def test_validate_mandatory_columns(self, temp_dir):
         measurements_file = pd.DataFrame(VALID_MEASUREMENTS_DATA)
@@ -195,9 +203,7 @@ class TestCSVReader:
         controls_file = pd.DataFrame(VALID_CONTROLS_DATA)
         controls_file = controls_file.drop(columns="id")
 
-        measurements_file_path = os.path.join(
-            temp_dir, "no_columns_measurements.csv"
-        )
+        measurements_file_path = os.path.join(temp_dir, "no_columns_measurements.csv")
         pd.DataFrame(measurements_file).to_csv(measurements_file_path, index=False)
 
         controls_file_path = os.path.join(temp_dir, "no_columns_controls.csv")
@@ -217,7 +223,7 @@ class TestCSVReader:
         reader.read_controls()
         assert "unnecesary" not in reader._measurements.columns
         assert "unnecesary" not in reader._controls.columns
-        
+
     def test_measurements_data_validation(
         self, invalid_measurements_file, valid_controls_file, empty_file
     ):
@@ -273,4 +279,3 @@ class TestCSVReader:
             )
             with pytest.raises(EmptyDatasetError):
                 empty_reader.read_controls()
-        

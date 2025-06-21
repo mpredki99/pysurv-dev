@@ -9,7 +9,12 @@ from .base_reader import BaseReader
 class CSVReader(BaseReader):
 
     def __init__(
-        self, measurements_file_path, controls_file_path, validation_mode="raise", delimiter=None, decimal='.'
+        self,
+        measurements_file_path,
+        controls_file_path,
+        validation_mode="raise",
+        delimiter=None,
+        decimal=".",
     ):
         super().__init__(validation_mode)
 
@@ -18,7 +23,7 @@ class CSVReader(BaseReader):
 
         self.validate_file_path(controls_file_path, "Controls")
         self._controls_file_path = controls_file_path
-        
+
         self.delimiter = delimiter
         self.decimal = decimal
 
@@ -28,7 +33,9 @@ class CSVReader(BaseReader):
 
     # MEASUREMENTS DATASET METHODS
     def read_measurements(self):
-        self._measurements = pd.read_csv(self._measurements_file_path, delimiter=self.delimiter, decimal=self.decimal)
+        self._measurements = pd.read_csv(
+            self._measurements_file_path, delimiter=self.delimiter, decimal=self.decimal
+        )
 
         self._measurements.columns = self._measurements.columns.str.lower()
         self._validate_mandatory_columns("Measurements")
@@ -69,7 +76,9 @@ class CSVReader(BaseReader):
 
     # CONTROLS DATASET METHODS
     def read_controls(self):
-        self._controls = pd.read_csv(self._controls_file_path, delimiter=self.delimiter, decimal=self.decimal)
+        self._controls = pd.read_csv(
+            self._controls_file_path, delimiter=self.delimiter, decimal=self.decimal
+        )
         self._controls.columns = self._controls.columns.str.lower()
         self._standardize_control_columns_names()
         self._validate_mandatory_columns("Controls")
@@ -100,9 +109,11 @@ class CSVReader(BaseReader):
 
     # STATIONS DATASET METHODS
     def read_stations(self):
-        stn_columns = self._measurements.columns[self._measurements.columns.isin(["stn_id", "stn_h", "stn_sh"])]
+        stn_columns = self._measurements.columns[
+            self._measurements.columns.isin(["stn_id", "stn_h", "stn_sh"])
+        ]
         self._stations = self._measurements[stn_columns].copy()
-        self._stations.dropna(how='all', inplace=True)
+        self._stations.dropna(how="all", inplace=True)
         self._stations.fillna({"stn_h": 0}, inplace=True)
         self._stations["stn_id"] = self._stations["stn_id"].ffill()
 

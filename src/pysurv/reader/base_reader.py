@@ -1,15 +1,15 @@
 from abc import ABC, abstractmethod
 from pprint import pformat
 
-from pydantic import ValidationError
 import numpy as np
+from pydantic import ValidationError
 
-from pysurv.models.models import ControlPointModel, MeasurementModel, StationModel
 from pysurv.exceptions.exceptions import (
     EmptyDatasetError,
     InvalidDataError,
     MissingMandatoryColumnsError,
 )
+from pysurv.models.models import ControlPointModel, MeasurementModel, StationModel
 
 
 class BaseReader(ABC):
