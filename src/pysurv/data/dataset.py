@@ -36,9 +36,9 @@ class Dataset:
         reader.read_measurements()
         reader.read_controls()
 
-        measurements = Measurements(reader.get_measurements(), angle_unit=angle_unit)
-        controls = Controls(reader.get_controls(), swap_xy=swap_xy, crs=crs)
-        stations = Stations(reader.get_stations())
+        measurements = Measurements(reader.measurements, angle_unit=angle_unit)
+        controls = Controls(reader.controls, swap_xy=swap_xy, crs=crs)
+        stations = Stations(reader.stations)
 
         return cls(measurements, controls, stations)
 

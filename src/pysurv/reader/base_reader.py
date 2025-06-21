@@ -41,23 +41,26 @@ class BaseReader(ABC):
         pass
 
     # Dataset getters
-    def get_measurements(self):
+    @property
+    def measurements(self):
         return self._measurements
 
-    def get_controls(self):
+    @property
+    def controls(self):
         return self._controls
 
-    def get_stations(self):
+    @property
+    def stations(self):
         return self._stations
 
     def get_dataset(self, dataset_name):
-        dataset_getters = {
-            "Measurements": self.get_measurements,
-            "Controls": self.get_controls,
-            "Stations": self.get_stations,
+        datasets = {
+            "Measurements": self.measurements,
+            "Controls": self.controls,
+            "Stations": self.stations,
         }
-        dataset_getter = dataset_getters.get(dataset_name)
-        return dataset_getter()
+        dataset = datasets.get(dataset_name)
+        return dataset
 
     # Datasets filter
     def _filter_columns(self, dataset_name):
