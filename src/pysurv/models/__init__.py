@@ -1,3 +1,3 @@
-from .models import MeasurementModel, ControlPointModel, StationModel
+from .models import ControlPointModel, MeasurementModel, StationModel
 
-all = ["MeasurementModel", "ControlPointModel", "StationModel"]
+__all__ = ["ControlPointModel", "MeasurementModel", "StationModel"]
