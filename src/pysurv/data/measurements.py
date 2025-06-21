@@ -67,7 +67,8 @@ class Measurements(pd.DataFrame):
     def _constructor(self):
         return Measurements
 
-    def set_angle_unit(self, new_angle_unit):
+    @angle_unit.setter
+    def angle_unit(self, new_angle_unit):
         self._validate_angle_unit(new_angle_unit)
         self._angle_unit = new_angle_unit
 
