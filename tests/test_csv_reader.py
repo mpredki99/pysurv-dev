@@ -231,15 +231,15 @@ class TestCSVReader:
             invalid_measurements_file, valid_controls_file, validation_mode=None
         )
         none_reader.read_measurements()
-        assert not none_reader.get_measurements().empty
-        assert len(none_reader.get_measurements()) == 3
+        assert not none_reader.measurements.empty
+        assert len(none_reader.measurements) == 3
 
         skip_reader = CSVReader(
             invalid_measurements_file, valid_controls_file, validation_mode="skip"
         )
         skip_reader.read_measurements()
-        assert not skip_reader.get_measurements().empty
-        assert skip_reader.get_measurements().isna().sum().sum() == 5
+        assert not skip_reader.measurements.empty
+        assert skip_reader.measurements.isna().sum().sum() == 5
 
         raise_reader = CSVReader(invalid_measurements_file, valid_controls_file)
         with pytest.raises(InvalidDataError):
@@ -259,15 +259,15 @@ class TestCSVReader:
             valid_measurements_file, invalid_controls_file, validation_mode=None
         )
         none_reader.read_controls()
-        assert not none_reader.get_controls().empty
-        assert len(none_reader.get_controls()) == 3
+        assert not none_reader.controls.empty
+        assert len(none_reader.controls) == 3
 
         skip_reader = CSVReader(
             valid_measurements_file, invalid_controls_file, validation_mode="skip"
         )
         skip_reader.read_controls()
-        assert not skip_reader.get_controls().empty
-        assert skip_reader.get_controls().isna().sum().sum() == 5
+        assert not skip_reader.controls.empty
+        assert skip_reader.controls.isna().sum().sum() == 5
 
         raise_reader = CSVReader(valid_measurements_file, invalid_controls_file)
         with pytest.raises(InvalidDataError):
