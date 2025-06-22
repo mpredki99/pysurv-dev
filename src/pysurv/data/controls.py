@@ -3,47 +3,64 @@ import numpy as np
 import pandas as pd
 from shapely.errors import DimensionError
 
+from pysurv.exceptions import GeometryCreationError
 from pysurv.models import ControlPointModel
 
 
 class Controls(gpd.GeoDataFrame):
     def __init__(self, data=None, *args, swap_xy=False, crs=None, **kwargs):
         if {"x", "y", "z"}.issubset(data.columns):
-            super().__init__(
-                data,
-                *args,
-                geometry=gpd.points_from_xy(
-                    data.pop("x"), data.pop("y"), data.pop("z"), crs=crs
-                ),
-                **kwargs,
-            )
+            self._init_with_3D_geometry(data=data, *args, crs=None, **kwargs)
         elif {"x", "y"}.issubset(data.columns):
-            super().__init__(
-                data,
-                *args,
-                geometry=gpd.points_from_xy(data.pop("x"), data.pop("y"), crs=crs),
-                **kwargs,
-            )
+            self._init_with_2D_geometry(data=data, *args, crs=None, **kwargs)
         elif {"z"}.issubset(data.columns):
-            super().__init__(
-                data,
-                *args,
-                geometry=gpd.points_from_xy(np.inf, np.inf, data.pop("z"), crs=crs),
-                **kwargs,
-            )
+            self._init_with_1D_geometry(data=data, *args, crs=None, **kwargs)
         else:
-            super().__init__(data, *args, crs=crs, **kwargs)
+            self._init_with_no_geometry(data=data, *args, crs=None, **kwargs)
+
+        self._validate_geometry_creation()
 
         if {"id"}.issubset(self.columns):
             self.set_index(["id"], inplace=True)
-            self._to_float()
 
         if swap_xy:
             self.swap_xy()
 
-    def _to_float(self):
-        for col in self.sigma_columns:
-            self[col] = self[col].astype(float)
+    def _init_with_3D_geometry(self, data=None, *args, crs=None, **kwargs):
+        super().__init__(
+            data,
+            *args,
+            geometry=gpd.points_from_xy(
+                data.pop("x"), data.pop("y"), data.pop("z"), crs=crs
+            ),
+            **kwargs,
+        )
+
+    def _init_with_2D_geometry(self, data=None, *args, crs=None, **kwargs):
+        super().__init__(
+            data,
+            *args,
+            geometry=gpd.points_from_xy(data.pop("x"), data.pop("y"), crs=crs),
+            **kwargs,
+        )
+
+    def _init_with_1D_geometry(self, data=None, *args, crs=None, **kwargs):
+        super().__init__(
+            data,
+            *args,
+            geometry=gpd.points_from_xy(np.inf, np.inf, data.pop("z"), crs=crs),
+            **kwargs,
+        )
+
+    def _init_with_no_geometry(self, data=None, *args, crs=None, **kwargs):
+        super().__init__(data, *args, crs=crs, **kwargs)
+
+    def _validate_geometry_creation(self):
+        if any(col in self.columns for col in ["x", "y", "z"]):
+            cols = [col for col in ["x", "y", "z"] if col in self.columns]
+            raise GeometryCreationError(
+                f"Geometry was not created from column with coordinates: {cols}"
+            )
 
     @property
     def x(self):
@@ -75,11 +92,15 @@ class Controls(gpd.GeoDataFrame):
         return self.columns[self.columns.isin(ControlPointModel.COLUMN_LABELS["sigma"])]
 
     def swap_xy(self):
+        swapped_xy = False
         if {"x", "y", "z"}.issubset(self.geometry_columns):
             self._swap_xy_3D_point()
-            self._swap_xy_sigma()
+            swapped_xy = True
         elif {"x", "y"}.issubset(self.geometry_columns):
             self._swap_xy_2D_point()
+            swapped_xy = True
+
+        if swapped_xy:
             self._swap_xy_sigma()
 
     def _swap_xy_3D_point(self):
