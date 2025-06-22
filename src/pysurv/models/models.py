@@ -48,7 +48,7 @@ class MeasurementModel(BaseModel):
 
     COLUMN_LABELS: ClassVar[dict] = {
         "station_key": ["stn_pk"],
-        "points": ["stn_id", "trg_id"],
+        "points_label": ["stn_id", "trg_id"],
         "points_height": ["stn_h", "trg_h"],
         "points_height_sigma": ["stn_sh", "trg_sh"],
         "linear_measurements": ["sd", "hd", "vd", "dx", "dy", "dz"],
@@ -87,12 +87,12 @@ class StationModel(BaseModel):
     stn_sh: float | None = Field(
         default=None, description="Standard deviation in stn_h."
     )
+    orientation: float | None = None
 
     COLUMN_LABELS: ClassVar[dict] = {
         "station_key": ["stn_pk"],
-        "point_label": ["stn_id"],
-        "station_height": ["stn_h"],
-        "station_height_sigma": ["stn_sh"],
+        "base_point": ["stn_id"],
+        "station_attributes": ["stn_h", "stn_sh", "orientation"],
     }
 
     @field_validator("stn_sh")
