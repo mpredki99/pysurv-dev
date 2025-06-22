@@ -8,3 +8,7 @@ class InvalidDataError(Exception):
 
 class EmptyDatasetError(Exception):
     pass
+
+
+class GeometryCreationError(Exception):
+    pass
