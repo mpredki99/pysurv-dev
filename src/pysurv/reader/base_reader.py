@@ -4,7 +4,7 @@ from pprint import pformat
 import numpy as np
 from pydantic import ValidationError
 
-from pysurv.exceptions.exceptions import (
+from pysurv.exceptions import (
     EmptyDatasetError,
     InvalidDataError,
     MissingMandatoryColumnsError,
@@ -66,7 +66,7 @@ class BaseReader(ABC):
     def _filter_columns(self, dataset_name):
         acceptable_columns_dict = {
             "Measurements": MeasurementModel.COLUMN_LABELS["station_key"]
-            + MeasurementModel.COLUMN_LABELS["points"]
+            + MeasurementModel.COLUMN_LABELS["points_label"]
             + MeasurementModel.COLUMN_LABELS["points_height"]
             + MeasurementModel.COLUMN_LABELS["points_height_sigma"]
             + MeasurementModel.COLUMN_LABELS["linear_measurements"]
@@ -77,21 +77,40 @@ class BaseReader(ABC):
             + ControlPointModel.COLUMN_LABELS["coordinates"]
             + ControlPointModel.COLUMN_LABELS["sigma"],
             "Stations": StationModel.COLUMN_LABELS["station_key"]
-            + StationModel.COLUMN_LABELS["point_label"]
-            + StationModel.COLUMN_LABELS["station_height"],
+            + StationModel.COLUMN_LABELS["base_point"]
+            + StationModel.COLUMN_LABELS["station_attributes"],
         }
         acceptable_columns_list = acceptable_columns_dict.get(dataset_name)
         dataset = self.get_dataset(dataset_name)
 
         return dataset.loc[:, dataset.columns.isin(acceptable_columns_list)]
 
+    def _to_float(self, dataset_name):
+        dataset = self.get_dataset(dataset_name)
+        numeric_columns_dict = {
+            "Measurements": MeasurementModel.COLUMN_LABELS["points_height"]
+            + MeasurementModel.COLUMN_LABELS["points_height_sigma"]
+            + MeasurementModel.COLUMN_LABELS["linear_measurements"]
+            + MeasurementModel.COLUMN_LABELS["linear_measurements_sigma"]
+            + MeasurementModel.COLUMN_LABELS["angular_measurements"]
+            + MeasurementModel.COLUMN_LABELS["angular_measurements_sigma"],
+            "Controls": ControlPointModel.COLUMN_LABELS["coordinates"]
+            + ControlPointModel.COLUMN_LABELS["sigma"],
+            "Stations": StationModel.COLUMN_LABELS["station_attributes"],
+        }
+        numeric_columns_list = numeric_columns_dict.get(dataset_name)
+        numeric_columns = dataset.columns[dataset.columns.isin(numeric_columns_list)]
+
+        for col in numeric_columns:
+            dataset[col] = dataset[col].astype(float)
+
     # Datasets validators
     def _validate_mandatory_columns(self, dataset_name):
         mandatory_columns_dict = {
-            "Measurements": MeasurementModel.COLUMN_LABELS["points"],
+            "Measurements": MeasurementModel.COLUMN_LABELS["points_label"],
             "Controls": ControlPointModel.COLUMN_LABELS["point_label"],
             "Stations": StationModel.COLUMN_LABELS["station_key"]
-            + StationModel.COLUMN_LABELS["point_label"],
+            + StationModel.COLUMN_LABELS["base_point"],
         }
         dataset = self.get_dataset(dataset_name)
         mandatory_columns_set = set(mandatory_columns_dict.get(dataset_name))
@@ -129,7 +148,6 @@ class BaseReader(ABC):
         if errors and self._validation_mode == "raise":
             raise InvalidDataError(message)
         elif errors and self._validation_mode == "skip":
-            print(message + "\nInvalid values  were skipped.")
-            invalid_row_indices = dataset.iloc[list(errors.keys())].index
-        if dataset.empty or dataset is None:
+            print(message + "\n" + "Invalid values  were skipped.")
+        if dataset is None or dataset.empty:
             raise EmptyDatasetError(f"{dataset_name} dataset is empty.")

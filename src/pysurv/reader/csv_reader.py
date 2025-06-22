@@ -47,6 +47,8 @@ class CSVReader(BaseReader):
         if self._validation_mode in ["raise", "skip"]:
             self._validate_data("Measurements")
 
+        self._to_float("Measurements")
+
     def _insert_stn_pk(self):
         self._measurements.insert(0, "meas_iloc", np.arange(len(self._measurements)))
         self._measurements = self._measurements.merge(
@@ -87,6 +89,8 @@ class CSVReader(BaseReader):
         if self._validation_mode in ["raise", "skip"]:
             self._validate_data("Controls")
 
+        self._to_float("Controls")
+
     def _standardize_control_columns_names(self):
         self._controls.rename(
             columns={
@@ -123,6 +127,8 @@ class CSVReader(BaseReader):
 
         if self._validation_mode in ["raise", "skip"]:
             self._validate_data("Stations")
+
+        self._to_float("Stations")
 
     def _standardize_stations_columns_names(self):
         self._stations.rename_axis("stn_pk", inplace=True)
