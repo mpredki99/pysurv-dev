@@ -1,7 +1,4 @@
-import os
-import tempfile
-
-import pandas as pd
+import numpy as np
 import pytest
 
 from pysurv.exceptions.exceptions import (
@@ -11,120 +8,42 @@ from pysurv.exceptions.exceptions import (
 )
 from pysurv.reader.csv_reader import CSVReader
 
-# Test data
-VALID_MEASUREMENTS_DATA = {
-    "stn_id": ["STN1", "STN1", "STN2"],
-    "stn_h": [1.500, -1.576, 0.000],
-    "trg_id": ["T1", "T2", "T3"],
-    "trg_h": [-1.245, None, 1.753],
-    "sd": [100.0, 200.0, 300.0],
-    "hz": [100.0000, 134.5678, 321.1234],
-    "shz": [0.0020, 0.0000, None],
-    "vd": [2.0, -3.0, 14.0],
-    "unnecesary": ["A", "B", "C"],
-}
-
-VALID_CONTROLS_DATA = {
-    "id": ["C1", "C2", "C3"],
-    "x": [1000.00, 2000.00, 3000.00],
-    "y": [1000.00, 2000.00, 3000.00],
-    "z": [100.00, 200.00, 300.00],
-    "sx": [-1, 0.00, 1.00],
-    "sy": [0.10, 0.10, 0.10],
-    "sz": [0.00, 0.00, 0.00],
-    "unnecesary": ["A", "B", "C"],
-}
-
-INVALID_MEASUREMENTS_DATA = {
-    "stn_id": ["STN1", "STN1", "STN2"],
-    "stn_h": [None, -1.576, 0],
-    "trg_id": ["T1", "T2", "T3"],
-    "trg_h": [-1.245, 0.000, 1.753],
-    "sd": ["Invalid_value", 200.0, 300.0],
-    "hz": [100.0000, 134.5678, 321.1234],
-    "shz": [-0.0020, 0.0000, None],
-    "vd": ["Invalid_value", 2.0, "Invalid_value"],
-}
-
-INVALID_CONTROLS_DATA = {
-    "id": ["C1", "C2", "C3"],
-    "x": ["Invalid_value", 2000.0, 3000.0],
-    "y": [1000.0, 2000.0, 3000.0],
-    "z": [100.0, "Invalid_value", 300.00],
-    "sx": [-0.10, 0.00, 0.10],
-    "sy": ["Invalid_value", "Invalid_value", 0.10],
-    "sz": [0.00, 0.00, 0.00],
-}
-
-
-@pytest.fixture
-def valid_controls_file():
-    with tempfile.TemporaryDirectory() as temp_dir:
-        valid_controls_file = os.path.join(temp_dir, "measurements.csv")
-        pd.DataFrame(VALID_CONTROLS_DATA).to_csv(valid_controls_file, index=False)
-        yield valid_controls_file
-
-
-@pytest.fixture
-def valid_measurements_file():
-    with tempfile.TemporaryDirectory() as temp_dir:
-        valid_measurements_file = os.path.join(temp_dir, "measurements.csv")
-        pd.DataFrame(VALID_MEASUREMENTS_DATA).to_csv(
-            valid_measurements_file, index=False
-        )
-        yield valid_measurements_file
-
-
-@pytest.fixture
-def invalid_measurements_file():
-    with tempfile.TemporaryDirectory() as temp_dir:
-        invalid_measurements_file = os.path.join(temp_dir, "invalid_measurements.csv")
-        pd.DataFrame(INVALID_MEASUREMENTS_DATA).to_csv(
-            invalid_measurements_file, index=False
-        )
-        yield invalid_measurements_file
-
-
-@pytest.fixture
-def invalid_controls_file():
-    with tempfile.TemporaryDirectory() as temp_dir:
-        invalid_controls_file = os.path.join(temp_dir, "invalid_controls.csv")
-        pd.DataFrame(INVALID_CONTROLS_DATA).to_csv(invalid_controls_file, index=False)
-        yield invalid_controls_file
-
-
-@pytest.fixture
-def empty_file():
-    with tempfile.TemporaryDirectory() as temp_dir:
-        empty_file = os.path.join(temp_dir, "empty.csv")
-        pd.DataFrame({"id": [], "stn_id": [], "trg_id": []}).to_csv(
-            empty_file, index=False
-        )
-        yield empty_file
-
-
-@pytest.fixture
-def temp_dir():
-    with tempfile.TemporaryDirectory() as temp_dir:
-        yield temp_dir
-
 
 class TestCSVReader:
 
-    def test_validation_mode(self, valid_measurements_file, valid_controls_file):
-        raise_mode = CSVReader(valid_measurements_file, valid_controls_file)
-        assert raise_mode._validation_mode == "raise"
+    def test_mandatory_init_arguments(self):
+        with pytest.raises(TypeError):
+            CSVReader()
 
-        skip_mode = CSVReader(
+    def test_invalid_measurement_path(self, valid_controls_file):
+        with pytest.raises(FileNotFoundError) as e:
+            CSVReader("invalid/path/measurements.csv", valid_controls_file)
+        assert "Measurements file not found:" in str(e.value)
+
+    def test_invalid_controls_path(self, valid_measurements_file):
+        with pytest.raises(FileNotFoundError) as e:
+            reader = CSVReader(valid_measurements_file, "invalid/path/controls.csv")
+        assert "Controls file not found:" in str(e.value)
+
+    def test_raise_validation_mode(self, valid_measurements_file, valid_controls_file):
+        reader = CSVReader(valid_measurements_file, valid_controls_file)
+        assert reader._validation_mode == "raise"
+
+    def test_skip_validation_mode(self, valid_measurements_file, valid_controls_file):
+        reader = CSVReader(
             valid_measurements_file, valid_controls_file, validation_mode="skip"
         )
-        assert skip_mode._validation_mode == "skip"
+        assert reader._validation_mode == "skip"
 
-        none_mode = CSVReader(
+    def test_none_validation_mode(self, valid_measurements_file, valid_controls_file):
+        reader = CSVReader(
             valid_measurements_file, valid_controls_file, validation_mode=None
         )
-        assert none_mode._validation_mode is None
+        assert reader._validation_mode is None
 
+    def test_invalid_validation_mode(
+        self, valid_measurements_file, valid_controls_file
+    ):
         with pytest.raises(ValueError):
             CSVReader(
                 valid_measurements_file,
@@ -132,150 +51,407 @@ class TestCSVReader:
                 validation_mode="invalid_mode",
             )
 
-    def test_invalid_measurement_path(self, valid_controls_file):
-        with pytest.raises(FileNotFoundError) as e_info:
-            CSVReader("invalid/path/measurements.csv", valid_controls_file)
-        assert "Measurements file not found:" in str(e_info.value)
-
-    def test_invalid_controls_path(self, valid_measurements_file):
-        with pytest.raises(FileNotFoundError) as e_info:
-            reader = CSVReader(valid_measurements_file, "invalid/path/controls.csv")
-        assert "Controls file not found:" in str(e_info.value)
-
-    def test_column_name_standarization(self, temp_dir):
-        measurements_file_path = os.path.join(temp_dir, "no_columns_measurements.csv")
-        pd.DataFrame(VALID_MEASUREMENTS_DATA).to_csv(
-            measurements_file_path,
-            index=False,
-            header=[
-                "STN_ID",
-                "STN_H",
-                "TRG_ID",
-                "TRG_H",
-                "SD",
-                "HZ",
-                "SHZ",
-                "VD",
-                "UNNECESARY",
-            ],
-        )
-
-        controls_file_path = os.path.join(temp_dir, "no_columns_controls.csv")
-        pd.DataFrame(VALID_CONTROLS_DATA).to_csv(
-            controls_file_path,
-            index=False,
-            header=[
-                "NR",
-                "EASTING",
-                "NORTHING",
-                "ELEVATION",
-                "SE",
-                "SN",
-                "SEL",
-                "UNNECESARY",
-            ],
-        )
-
-        reader = CSVReader(measurements_file_path, controls_file_path)
+    def test_measurements_columns_name_standarization(
+        self, measurements_file_columns_to_rename, valid_controls_file
+    ):
+        reader = CSVReader(measurements_file_columns_to_rename, valid_controls_file)
         reader.read_measurements()
+
+        assert "stn_pk" in reader.stations.columns
+        assert "STN_PK" not in reader.stations.columns
+        assert "stn_id" in reader.stations.columns
+        assert "STN_ID" not in reader.stations.columns
+        assert "stn_h" in reader.stations.columns
+        assert "STN_H" not in reader.stations.columns
+        assert "stn_sh" in reader.stations.columns
+        assert "STN_SH" not in reader.stations.columns
+
+        assert "stn_pk" in reader.measurements.columns
+        assert "STN_PK" not in reader.measurements.columns
+        assert "trg_id" in reader.measurements.columns
+        assert "TRG_ID" not in reader.measurements.columns
+        assert "trg_h" in reader.measurements.columns
+        assert "TRG_H" not in reader.measurements.columns
+        assert "trg_sh" in reader.measurements.columns
+        assert "TRG_SH" not in reader.measurements.columns
+        assert "sd" in reader.measurements.columns
+        assert "SD" not in reader.measurements.columns
+        assert "ssd" in reader.measurements.columns
+        assert "SSD" not in reader.measurements.columns
+        assert "hd" in reader.measurements.columns
+        assert "HD" not in reader.measurements.columns
+        assert "shd" in reader.measurements.columns
+        assert "SHD" not in reader.measurements.columns
+        assert "vd" in reader.measurements.columns
+        assert "VD" not in reader.measurements.columns
+        assert "svd" in reader.measurements.columns
+        assert "SVD" not in reader.measurements.columns
+        assert "dx" in reader.measurements.columns
+        assert "DX" not in reader.measurements.columns
+        assert "sdx" in reader.measurements.columns
+        assert "SDX" not in reader.measurements.columns
+        assert "dy" in reader.measurements.columns
+        assert "DY" not in reader.measurements.columns
+        assert "sdy" in reader.measurements.columns
+        assert "SDY" not in reader.measurements.columns
+        assert "dz" in reader.measurements.columns
+        assert "DZ" not in reader.measurements.columns
+        assert "sdz" in reader.measurements.columns
+        assert "SDZ" not in reader.measurements.columns
+        assert "a" in reader.measurements.columns
+        assert "A" not in reader.measurements.columns
+        assert "sa" in reader.measurements.columns
+        assert "SA" not in reader.measurements.columns
+        assert "hz" in reader.measurements.columns
+        assert "HZ" not in reader.measurements.columns
+        assert "shz" in reader.measurements.columns
+        assert "SHZ" not in reader.measurements.columns
+        assert "vz" in reader.measurements.columns
+        assert "VZ" not in reader.measurements.columns
+        assert "svz" in reader.measurements.columns
+        assert "SVZ" not in reader.measurements.columns
+        assert "vh" in reader.measurements.columns
+        assert "VH" not in reader.measurements.columns
+        assert "svh" in reader.measurements.columns
+        assert "SVH" not in reader.measurements.columns
+
+    def test_controls_columns_name_standarization_e_n_el(
+        self, valid_measurements_file, controls_file_column_to_rename_e_n_el
+    ):
+        reader = CSVReader(
+            valid_measurements_file, controls_file_column_to_rename_e_n_el
+        )
         reader.read_controls()
 
-        assert "stn_pk" in reader._measurements.columns
-        assert "trg_id" in reader._measurements.columns
-        assert "trg_h" in reader._measurements.columns
-        assert "sd" in reader._measurements.columns
-        assert "hz" in reader._measurements.columns
-        assert "shz" in reader._measurements.columns
-        assert "vd" in reader._measurements.columns
+        assert "id" in reader.controls.columns
+        assert "NR" not in reader.controls.columns
+        assert "x" in reader.controls.columns
+        assert "E" not in reader.controls.columns
+        assert "y" in reader.controls.columns
+        assert "N" not in reader.controls.columns
+        assert "z" in reader.controls.columns
+        assert "EL" not in reader.controls.columns
+        assert "sx" in reader.controls.columns
+        assert "SE" not in reader.controls.columns
+        assert "sy" in reader.controls.columns
+        assert "SN" not in reader.controls.columns
+        assert "sz" in reader.controls.columns
+        assert "SEL" not in reader.controls.columns
 
-        assert "id" in reader._controls.columns
-        assert "x" in reader._controls.columns
-        assert "y" in reader._controls.columns
-        assert "z" in reader._controls.columns
-        assert "sx" in reader._controls.columns
-        assert "sy" in reader._controls.columns
-        assert "sz" in reader._controls.columns
+    def test_controls_columns_name_standarization_easting_northing_height(
+        self,
+        valid_measurements_file,
+        controls_file_column_to_rename_easting_northing_height,
+    ):
+        reader = CSVReader(
+            valid_measurements_file,
+            controls_file_column_to_rename_easting_northing_height,
+        )
+        reader.read_controls()
 
-    def test_validate_mandatory_columns(self, temp_dir):
-        measurements_file = pd.DataFrame(VALID_MEASUREMENTS_DATA)
-        measurements_file = measurements_file.drop(columns=["stn_id", "trg_id"])
+        assert "id" in reader.controls.columns
+        assert "NR" not in reader.controls.columns
+        assert "x" in reader.controls.columns
+        assert "EASTING" not in reader.controls.columns
+        assert "y" in reader.controls.columns
+        assert "NORTHING" not in reader.controls.columns
+        assert "z" in reader.controls.columns
+        assert "HEIGHT" not in reader.controls.columns
+        assert "sx" in reader.controls.columns
+        assert "SE" not in reader.controls.columns
+        assert "sy" in reader.controls.columns
+        assert "SN" not in reader.controls.columns
+        assert "sz" in reader.controls.columns
+        assert "SEL" not in reader.controls.columns
 
-        controls_file = pd.DataFrame(VALID_CONTROLS_DATA)
-        controls_file = controls_file.drop(columns="id")
+    def test_measurements_file_filtering(
+        self, measurements_file_to_filter, valid_controls_file
+    ):
+        reader = CSVReader(measurements_file_to_filter, valid_controls_file)
+        reader.read_measurements()
 
-        measurements_file_path = os.path.join(temp_dir, "no_columns_measurements.csv")
-        pd.DataFrame(measurements_file).to_csv(measurements_file_path, index=False)
+        assert "UNNECESSARY COLUMN" not in reader.measurements.columns
+        assert "EXTRA COLUMN" not in reader.measurements.columns
 
-        controls_file_path = os.path.join(temp_dir, "no_columns_controls.csv")
-        pd.DataFrame(controls_file).to_csv(controls_file_path, index=False)
+    def test_controls_file_filtering(
+        self, valid_measurements_file, controls_file_to_filter
+    ):
+        reader = CSVReader(valid_measurements_file, controls_file_to_filter)
+        reader.read_controls()
 
-        reader = CSVReader(measurements_file_path, controls_file_path)
+        assert "UNNECESSARY COLUMN" not in reader.controls.columns
+        assert "EXTRA COLUMN" not in reader.controls.columns
 
+    def test_measurements_missing_mandatory_columns(
+        self, measurements_file_missing_mandatory_columns, valid_controls_file
+    ):
+        reader = CSVReader(
+            measurements_file_missing_mandatory_columns, valid_controls_file
+        )
         with pytest.raises(MissingMandatoryColumnsError):
             reader.read_measurements()
 
+    def test_controls_missing_mandatory_columns(
+        self, valid_measurements_file, controls_file_missing_mandatory_columns
+    ):
+        reader = CSVReader(
+            valid_measurements_file, controls_file_missing_mandatory_columns
+        )
         with pytest.raises(MissingMandatoryColumnsError):
             reader.read_controls()
 
-    def test_filter_columns(self, valid_measurements_file, valid_controls_file):
-        reader = CSVReader(valid_measurements_file, valid_controls_file)
-        reader.read_measurements()
-        reader.read_controls()
-        assert "unnecesary" not in reader._measurements.columns
-        assert "unnecesary" not in reader._controls.columns
-
-    def test_measurements_data_validation(
-        self, invalid_measurements_file, valid_controls_file, empty_file
+    def test_measurements_data_validation_none(
+        self, invalid_measurements_file, valid_controls_file
     ):
-        none_reader = CSVReader(
+        reader = CSVReader(
             invalid_measurements_file, valid_controls_file, validation_mode=None
         )
-        none_reader.read_measurements()
-        assert not none_reader.measurements.empty
-        assert len(none_reader.measurements) == 3
+        with pytest.raises(ValueError):
+            reader.read_measurements()
 
-        skip_reader = CSVReader(
+        trg_h = reader.measurements.columns.get_loc("trg_h")
+        trg_sh = reader.measurements.columns.get_loc("trg_sh")
+        sd = reader.measurements.columns.get_loc("sd")
+        ssd = reader.measurements.columns.get_loc("ssd")
+        hd = reader.measurements.columns.get_loc("hd")
+        shd = reader.measurements.columns.get_loc("shd")
+        vd = reader.measurements.columns.get_loc("vd")
+        svd = reader.measurements.columns.get_loc("svd")
+        dx = reader.measurements.columns.get_loc("dx")
+        sdx = reader.measurements.columns.get_loc("sdx")
+        dy = reader.measurements.columns.get_loc("dy")
+        sdy = reader.measurements.columns.get_loc("sdy")
+        dz = reader.measurements.columns.get_loc("dz")
+        sdz = reader.measurements.columns.get_loc("sdz")
+        a = reader.measurements.columns.get_loc("a")
+        sa = reader.measurements.columns.get_loc("sa")
+        hz = reader.measurements.columns.get_loc("hz")
+        shz = reader.measurements.columns.get_loc("shz")
+        vz = reader.measurements.columns.get_loc("vz")
+        svz = reader.measurements.columns.get_loc("svz")
+        vh = reader.measurements.columns.get_loc("vh")
+        svh = reader.measurements.columns.get_loc("svh")
+
+        assert not reader.measurements.empty
+
+        assert reader.measurements.iloc[1, trg_h] == "Invalid type"
+        assert reader.measurements.iloc[2, trg_sh] == "Invalid type"
+        assert reader.measurements.iloc[4, trg_sh] == "-0.01"
+        assert reader.measurements.iloc[2, sd] == "Invalid type"
+        assert reader.measurements.iloc[3, sd] == "-100.0"
+        assert reader.measurements.iloc[1, ssd] == "-0.01"
+        assert reader.measurements.iloc[4, ssd] == "Invalid type"
+        assert reader.measurements.iloc[1, hd] == "-100.0"
+        assert reader.measurements.iloc[2, hd] == "Invalid type"
+        assert reader.measurements.iloc[2, shd] == "Invalid type"
+        assert reader.measurements.iloc[3, shd] == "-0.01"
+        assert reader.measurements.iloc[3, vd] == "Invalid type"
+        assert reader.measurements.iloc[1, svd] == "Invalid type"
+        assert reader.measurements.iloc[2, svd] == "-0.01"
+        assert reader.measurements.iloc[3, dx] == "Invalid type"
+        assert reader.measurements.iloc[0, sdx] == "Invalid type"
+        assert reader.measurements.iloc[1, sdx] == "-0.008"
+        assert reader.measurements.iloc[1, dy] == "Invalid type"
+        assert reader.measurements.iloc[0, sdy] == "-0.01"
+        assert reader.measurements.iloc[2, sdy] == "Invalid type"
+        assert reader.measurements.iloc[3, dz] == "Invalid type"
+        assert reader.measurements.iloc[1, sdz] == "-0.001"
+        assert reader.measurements.iloc[2, sdz] == "Invalid type"
+        assert reader.measurements.iloc[1, a] == "Invalid type"
+        assert reader.measurements.iloc[2, sa] == "-0.01"
+        assert reader.measurements.iloc[3, sa] == "Invalid type"
+        assert reader.measurements.iloc[0, hz] == "Invalid type"
+        assert reader.measurements.iloc[2, shz] == "-0.002"
+        assert reader.measurements.iloc[3, shz] == "Invalid type"
+        assert reader.measurements.iloc[1, vz] == "Invalid type"
+        assert reader.measurements.iloc[0, svz] == "-0.01"
+        assert reader.measurements.iloc[3, svz] == "Invalid type"
+        assert reader.measurements.iloc[4, vh] == "Invalid type"
+        assert reader.measurements.iloc[1, svh] == "Invalid type"
+        assert reader.measurements.iloc[2, svh] == "-0.1"
+
+    def test_measurements_data_validation_skip(
+        self, invalid_measurements_file, valid_controls_file
+    ):
+        reader = CSVReader(
             invalid_measurements_file, valid_controls_file, validation_mode="skip"
         )
-        skip_reader.read_measurements()
-        assert not skip_reader.measurements.empty
-        assert skip_reader.measurements.isna().sum().sum() == 5
+        reader.read_measurements()
 
-        raise_reader = CSVReader(invalid_measurements_file, valid_controls_file)
-        with pytest.raises(InvalidDataError):
-            raise_reader.read_measurements()
+        trg_h = reader.measurements.columns.get_loc("trg_h")
+        trg_sh = reader.measurements.columns.get_loc("trg_sh")
+        sd = reader.measurements.columns.get_loc("sd")
+        ssd = reader.measurements.columns.get_loc("ssd")
+        hd = reader.measurements.columns.get_loc("hd")
+        shd = reader.measurements.columns.get_loc("shd")
+        vd = reader.measurements.columns.get_loc("vd")
+        svd = reader.measurements.columns.get_loc("svd")
+        dx = reader.measurements.columns.get_loc("dx")
+        sdx = reader.measurements.columns.get_loc("sdx")
+        dy = reader.measurements.columns.get_loc("dy")
+        sdy = reader.measurements.columns.get_loc("sdy")
+        dz = reader.measurements.columns.get_loc("dz")
+        sdz = reader.measurements.columns.get_loc("sdz")
+        a = reader.measurements.columns.get_loc("a")
+        sa = reader.measurements.columns.get_loc("sa")
+        hz = reader.measurements.columns.get_loc("hz")
+        shz = reader.measurements.columns.get_loc("shz")
+        vz = reader.measurements.columns.get_loc("vz")
+        svz = reader.measurements.columns.get_loc("svz")
+        vh = reader.measurements.columns.get_loc("vh")
+        svh = reader.measurements.columns.get_loc("svh")
 
-        for validation_mode in ["skip", "raise"]:
-            empty_reader = CSVReader(
-                empty_file, valid_controls_file, validation_mode=validation_mode
-            )
-            with pytest.raises(EmptyDatasetError):
-                empty_reader.read_measurements()
+        assert not reader.measurements.empty
 
-    def test_controls_data_validation(
-        self, valid_measurements_file, invalid_controls_file, empty_file
+        assert np.isnan(reader.measurements.iloc[1, trg_h])
+        assert np.isnan(reader.measurements.iloc[2, trg_sh])
+        assert np.isnan(reader.measurements.iloc[4, trg_sh])
+        assert np.isnan(reader.measurements.iloc[2, sd])
+        assert np.isnan(reader.measurements.iloc[3, sd])
+        assert np.isnan(reader.measurements.iloc[1, ssd])
+        assert np.isnan(reader.measurements.iloc[4, ssd])
+        assert np.isnan(reader.measurements.iloc[1, hd])
+        assert np.isnan(reader.measurements.iloc[2, hd])
+        assert np.isnan(reader.measurements.iloc[2, shd])
+        assert np.isnan(reader.measurements.iloc[3, shd])
+        assert np.isnan(reader.measurements.iloc[3, vd])
+        assert np.isnan(reader.measurements.iloc[1, svd])
+        assert np.isnan(reader.measurements.iloc[2, svd])
+        assert np.isnan(reader.measurements.iloc[3, dx])
+        assert np.isnan(reader.measurements.iloc[0, sdx])
+        assert np.isnan(reader.measurements.iloc[1, sdx])
+        assert np.isnan(reader.measurements.iloc[1, dy])
+        assert np.isnan(reader.measurements.iloc[0, sdy])
+        assert np.isnan(reader.measurements.iloc[2, sdy])
+        assert np.isnan(reader.measurements.iloc[3, dz])
+        assert np.isnan(reader.measurements.iloc[1, sdz])
+        assert np.isnan(reader.measurements.iloc[2, sdz])
+        assert np.isnan(reader.measurements.iloc[1, a])
+        assert np.isnan(reader.measurements.iloc[2, sa])
+        assert np.isnan(reader.measurements.iloc[3, sa])
+        assert np.isnan(reader.measurements.iloc[0, hz])
+        assert np.isnan(reader.measurements.iloc[2, shz])
+        assert np.isnan(reader.measurements.iloc[3, shz])
+        assert np.isnan(reader.measurements.iloc[1, vz])
+        assert np.isnan(reader.measurements.iloc[0, svz])
+        assert np.isnan(reader.measurements.iloc[3, svz])
+        assert np.isnan(reader.measurements.iloc[4, vh])
+        assert np.isnan(reader.measurements.iloc[1, svh])
+        assert np.isnan(reader.measurements.iloc[2, svh])
+
+    def test_measurements_data_validation_raise(
+        self, invalid_measurements_file, valid_controls_file
     ):
-        none_reader = CSVReader(
+        reader = CSVReader(invalid_measurements_file, valid_controls_file)
+        with pytest.raises(InvalidDataError):
+            reader.read_measurements()
+
+    def test_controls_data_validation_none(
+        self, valid_measurements_file, invalid_controls_file
+    ):
+        reader = CSVReader(
             valid_measurements_file, invalid_controls_file, validation_mode=None
         )
-        none_reader.read_controls()
-        assert not none_reader.controls.empty
-        assert len(none_reader.controls) == 3
+        with pytest.raises(ValueError):
+            reader.read_controls()
 
-        skip_reader = CSVReader(
+        x = reader.controls.columns.get_loc("x")
+        y = reader.controls.columns.get_loc("y")
+        z = reader.controls.columns.get_loc("z")
+        sx = reader.controls.columns.get_loc("sx")
+        sy = reader.controls.columns.get_loc("sy")
+        sz = reader.controls.columns.get_loc("sz")
+
+        assert not reader.controls.empty
+
+        assert reader.controls.iloc[0, 1] == "Invalid type"
+        assert reader.controls.iloc[1, y] == "Invalid type"
+        assert reader.controls.iloc[2, z] == "Invalid type"
+        assert reader.controls.iloc[0, sx] == "Invalid type"
+        assert reader.controls.iloc[2, sx] == "-0.01"
+        assert reader.controls.iloc[2, sy] == "Invalid type"
+        assert reader.controls.iloc[3, sy] == "-0.015"
+        assert reader.controls.iloc[0, sz] == "Invalid type"
+        assert reader.controls.iloc[2, sz] == "-0.01"
+
+    def test_controls_data_validation_skip(
+        self, valid_measurements_file, invalid_controls_file
+    ):
+        reader = CSVReader(
             valid_measurements_file, invalid_controls_file, validation_mode="skip"
         )
-        skip_reader.read_controls()
-        assert not skip_reader.controls.empty
-        assert skip_reader.controls.isna().sum().sum() == 5
+        reader.read_controls()
 
-        raise_reader = CSVReader(valid_measurements_file, invalid_controls_file)
+        x = reader.controls.columns.get_loc("x")
+        y = reader.controls.columns.get_loc("y")
+        z = reader.controls.columns.get_loc("z")
+        sx = reader.controls.columns.get_loc("sx")
+        sy = reader.controls.columns.get_loc("sy")
+        sz = reader.controls.columns.get_loc("sz")
+
+        assert not reader.controls.empty
+
+        assert np.isnan(reader.controls.iloc[0, 1])
+        assert np.isnan(reader.controls.iloc[1, y])
+        assert np.isnan(reader.controls.iloc[2, z])
+        assert np.isnan(reader.controls.iloc[0, sx])
+        assert np.isnan(reader.controls.iloc[2, sx])
+        assert np.isnan(reader.controls.iloc[2, sy])
+        assert np.isnan(reader.controls.iloc[3, sy])
+        assert np.isnan(reader.controls.iloc[0, sz])
+        assert np.isnan(reader.controls.iloc[2, sz])
+
+    def test_controls_data_validation_raise(
+        self, valid_measurements_file, invalid_controls_file
+    ):
+        reader = CSVReader(valid_measurements_file, invalid_controls_file)
         with pytest.raises(InvalidDataError):
-            raise_reader.read_controls()
+            reader.read_controls()
 
-        for validation_mode in ["skip", "raise"]:
-            empty_reader = CSVReader(
-                valid_measurements_file, empty_file, validation_mode=validation_mode
-            )
-            with pytest.raises(EmptyDatasetError):
-                empty_reader.read_controls()
+    def test_measurements_to_float(self, valid_measurements_file, valid_controls_file):
+        reader = CSVReader(valid_measurements_file, valid_controls_file)
+        reader.read_measurements()
+
+        for col in reader.measurements.columns:
+            if col in ["stn_pk", "trg_id"]:
+                continue
+            assert reader.measurements[col].dtype == float
+
+    def test_controls_to_float(self, valid_measurements_file, valid_controls_file):
+        reader = CSVReader(valid_measurements_file, valid_controls_file)
+        reader.read_controls()
+
+        for col in reader.controls.columns:
+            if col == "id":
+                continue
+            assert reader.controls[col].dtype == float
+            
+    def test_import_empty_measurements_file_raise(self, empty_file, valid_controls_file):
+        reader = CSVReader(empty_file, valid_controls_file)
+        with pytest.raises(EmptyDatasetError):
+            reader.read_measurements()
+            
+    def test_import_empty_measurements_file_skip(self, empty_file, valid_controls_file):
+        reader = CSVReader(empty_file, valid_controls_file, validation_mode="skip")
+        with pytest.raises(EmptyDatasetError):
+            reader.read_measurements()
+            
+    def test_import_empty_measurements_file_none(self, empty_file, valid_controls_file):
+        reader = CSVReader(empty_file, valid_controls_file, validation_mode=None)
+        reader.read_measurements()
+        assert reader.measurements.empty
+        
+    def test_import_empty_controls_file_raise(self, valid_measurements_file, empty_file):
+        reader = CSVReader(valid_measurements_file, empty_file)
+        with pytest.raises(EmptyDatasetError):
+            reader.read_controls()
+            
+    def test_import_empty_controls_file_skip(self, valid_measurements_file, empty_file):
+        reader = CSVReader(valid_measurements_file, empty_file, validation_mode="skip")
+        with pytest.raises(EmptyDatasetError):
+            reader.read_controls()
+            
+    def test_import_empty_controls_none(self, valid_measurements_file, empty_file):
+        reader = CSVReader(valid_measurements_file, empty_file, validation_mode=None)
+        reader.read_controls()
+        assert reader.controls.empty
