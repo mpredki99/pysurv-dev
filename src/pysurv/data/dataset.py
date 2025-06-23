@@ -64,7 +64,7 @@ class Dataset:
 
         index_names_sorted = [
             index_name
-            for index_name in ["stn_pk", "stn_id", "stn_h", "stn_sh", "trg_id"]
+            for index_name in ["stn_pk", "stn_id", "stn_h", "stn_sh", "trg_id", "trg_h", "trg_sh"]
             if index_name in joined_view.index.names
         ]
 

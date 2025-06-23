@@ -9,9 +9,13 @@ class Measurements(pd.DataFrame):
         super().__init__(data, *args, **kwargs)
         self._validate_angle_unit(angle_unit)
         self._angle_unit = angle_unit
+        
+        index_columns = ["stn_pk", "trg_id"]
+        optional_index_columns = [col for col in self.columns if col in ["trg_h", "trg_sh"]]
+        index_columns.extend(optional_index_columns)
 
-        if {"stn_pk", "trg_id"}.issubset(self.columns):
-            self.set_index(["stn_pk", "trg_id"], inplace=True)
+        if set(index_columns).issubset(self.columns):
+            self.set_index(index_columns, inplace=True)
             self.angles_to_rad()
 
     def _validate_angle_unit(self, angle_unit):
