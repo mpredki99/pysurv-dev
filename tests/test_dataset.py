@@ -1,33 +1,39 @@
 import pytest
 
-from pysurv.data import Dataset, Measurements, Controls, Stations
+from pysurv.data import Controls, Dataset, Measurements, Stations
 
 
 def test_dataset_instance(valid_measurements_file, valid_controls_file):
     dataset = Dataset.from_csv(valid_measurements_file, valid_controls_file)
     assert isinstance(dataset, Dataset)
 
+
 def test_dataset_measurements_instance(valid_measurements_file, valid_controls_file):
     dataset = Dataset.from_csv(valid_measurements_file, valid_controls_file)
     assert isinstance(dataset.measurements, Measurements)
-    
+
+
 def test_dataset_controls_instance(valid_measurements_file, valid_controls_file):
     dataset = Dataset.from_csv(valid_measurements_file, valid_controls_file)
     assert isinstance(dataset.controls, Controls)
-    
+
+
 def test_dataset_stations_instance(valid_measurements_file, valid_controls_file):
     dataset = Dataset.from_csv(valid_measurements_file, valid_controls_file)
     assert isinstance(dataset.stations, Stations)
-    
-def test_dataset_measurements_view_columns(valid_measurements_file, valid_controls_file):
+
+
+def test_dataset_measurements_view_columns(
+    valid_measurements_file, valid_controls_file
+):
     dataset = Dataset.from_csv(valid_measurements_file, valid_controls_file)
-    assert 'stn_pk' in dataset.measurements_view.index.names
-    assert 'stn_id' in dataset.measurements_view.index.names
-    assert 'stn_h' in dataset.measurements_view.index.names
-    assert 'stn_sh' in dataset.measurements_view.index.names
-    assert 'trg_id' in dataset.measurements_view.index.names
-    assert 'trg_h' in dataset.measurements_view.index.names
-    assert 'trg_sh' in dataset.measurements_view.index.names
+    assert "stn_pk" in dataset.measurements_view.index.names
+    assert "stn_id" in dataset.measurements_view.index.names
+    assert "stn_h" in dataset.measurements_view.index.names
+    assert "stn_sh" in dataset.measurements_view.index.names
+    assert "trg_id" in dataset.measurements_view.index.names
+    assert "trg_h" in dataset.measurements_view.index.names
+    assert "trg_sh" in dataset.measurements_view.index.names
     assert "sd" in dataset.measurements_view.columns
     assert "ssd" in dataset.measurements_view.columns
     assert "hd" in dataset.measurements_view.columns

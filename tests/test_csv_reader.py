@@ -425,32 +425,36 @@ class TestCSVReader:
             if col == "id":
                 continue
             assert reader.controls[col].dtype == float
-            
-    def test_import_empty_measurements_file_raise(self, empty_file, valid_controls_file):
+
+    def test_import_empty_measurements_file_raise(
+        self, empty_file, valid_controls_file
+    ):
         reader = CSVReader(empty_file, valid_controls_file)
         with pytest.raises(EmptyDatasetError):
             reader.read_measurements()
-            
+
     def test_import_empty_measurements_file_skip(self, empty_file, valid_controls_file):
         reader = CSVReader(empty_file, valid_controls_file, validation_mode="skip")
         with pytest.raises(EmptyDatasetError):
             reader.read_measurements()
-            
+
     def test_import_empty_measurements_file_none(self, empty_file, valid_controls_file):
         reader = CSVReader(empty_file, valid_controls_file, validation_mode=None)
         reader.read_measurements()
         assert reader.measurements.empty
-        
-    def test_import_empty_controls_file_raise(self, valid_measurements_file, empty_file):
+
+    def test_import_empty_controls_file_raise(
+        self, valid_measurements_file, empty_file
+    ):
         reader = CSVReader(valid_measurements_file, empty_file)
         with pytest.raises(EmptyDatasetError):
             reader.read_controls()
-            
+
     def test_import_empty_controls_file_skip(self, valid_measurements_file, empty_file):
         reader = CSVReader(valid_measurements_file, empty_file, validation_mode="skip")
         with pytest.raises(EmptyDatasetError):
             reader.read_controls()
-            
+
     def test_import_empty_controls_none(self, valid_measurements_file, empty_file):
         reader = CSVReader(valid_measurements_file, empty_file, validation_mode=None)
         reader.read_controls()
