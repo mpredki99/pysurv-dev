@@ -1,5 +1,4 @@
 from typing import ClassVar
-from warnings import warn
 
 import numpy as np
 from pydantic import BaseModel, Field, field_validator
