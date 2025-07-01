@@ -1,7 +1,7 @@
 import pandas as pd
 
-from pysurv import config
 from pysurv.basic import from_rad, to_rad
+from pysurv.config import config
 from pysurv.models import (
     ControlPointModel,
     MeasurementModel,

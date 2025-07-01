@@ -1,6 +1,6 @@
 import numpy as np
 
-from pysurv import config
+from pysurv.config import config
 from pysurv.models import validate_angle_unit
 
 

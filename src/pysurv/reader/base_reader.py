@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
 from pprint import pformat
 
-import numpy as np
 from pydantic import ValidationError
 
 from pysurv.exceptions import (

@@ -10,6 +10,6 @@ __all__ = [
     "ControlPointModel",
     "MeasurementModel",
     "StationModel",
-    "validate_angle_unit",
     "_validator",
+    "validate_angle_unit",
 ]
