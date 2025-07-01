@@ -1,26 +1,26 @@
 import pandas as pd
 
+from pysurv import config
 from pysurv.basic import from_rad, to_rad
-from pysurv.models import MeasurementModel
+from pysurv.models import MeasurementModel, validate_angle_unit
 
 
 class Measurements(pd.DataFrame):
-    def __init__(self, data, *args, angle_unit="grad", **kwargs):
+    def __init__(self, data, *args, angle_unit=None, **kwargs):
         super().__init__(data, *args, **kwargs)
-        self._validate_angle_unit(angle_unit)
-        self._angle_unit = angle_unit
-        
+        self._angle_unit = (
+            config.angle_unit if angle_unit is None else validate_angle_unit(angle_unit)
+        )
+
         index_columns = ["stn_pk", "trg_id"]
-        optional_index_columns = [col for col in self.columns if col in ["trg_h", "trg_sh"]]
+        optional_index_columns = [
+            col for col in self.columns if col in ["trg_h", "trg_sh"]
+        ]
         index_columns.extend(optional_index_columns)
 
         if set(index_columns).issubset(self.columns):
             self.set_index(index_columns, inplace=True)
-            self.angles_to_rad()
-
-    def _validate_angle_unit(self, angle_unit):
-        if angle_unit not in ["rad", "grad", "gon", "deg"]:
-            raise ValueError("Angle unit must be either 'rad', 'grad', 'gon', 'deg'.")
+            self._angles_to_rad()
 
     @property
     def _constructor(self):
@@ -69,10 +69,9 @@ class Measurements(pd.DataFrame):
 
     @angle_unit.setter
     def angle_unit(self, new_angle_unit):
-        self._validate_angle_unit(new_angle_unit)
-        self._angle_unit = new_angle_unit
+        self._angle_unit = validate_angle_unit(new_angle_unit)
 
-    def angles_to_rad(self):
+    def _angles_to_rad(self):
         if self.angle_unit == "rad":
             return
         self[self.angular_columns] = to_rad(
