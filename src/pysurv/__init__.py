@@ -1,4 +1,7 @@
-from pysurv import basic, data, reader
+from pysurv import adjustment, basic, data, reader
+from pysurv.adjustment import Adjustment
 from pysurv.data import Dataset
 
-__all__ = ["basic", "data", "Dataset", "reader"]
+from .config import config
+
+__all__ = ["adjustment", "Adjustment", "basic", "config", "data", "Dataset", "reader"]
