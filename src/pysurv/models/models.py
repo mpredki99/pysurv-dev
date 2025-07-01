@@ -1,7 +1,29 @@
 from typing import ClassVar
+from warnings import warn
 
 import numpy as np
 from pydantic import BaseModel, Field, field_validator
+
+
+def validate_angle_unit(v):
+    if v not in ["rad", "grad", "gon", "deg"]:
+        raise ValueError("Angle unit must be either 'rad', 'grad', 'gon', 'deg'.")
+    return v
+
+
+def _validator(v, enable_minus_one=False, error_message="Sigma values must be >= 0."):
+    is_empty = v is None or np.isnan(v)
+    is_negative = not v >= 0
+
+    error_condition = not is_empty and is_negative
+
+    if enable_minus_one:
+        error_condition = error_condition and not v == -1
+        error_message = "Control point sigma values must be >= 0 or -1."
+
+    if error_condition:
+        raise ValueError(f"{error_message} Got {v}.")
+    return v
 
 
 class MeasurementModel(BaseModel):
@@ -36,15 +58,11 @@ class MeasurementModel(BaseModel):
         "trg_sh", "ssd", "shd", "svd", "sdx", "sdy", "sdz", "sa", "shz", "svz", "svh"
     )
     def check_sigma(cls, v):
-        if not (v is None or np.isnan(v)) and not v >= 0:
-            raise ValueError("Sigma values must be >= 0.")
-        return v
+        return _validator(v)
 
     @field_validator("sd", "hd")
     def check_distance(cls, v):
-        if not (v is None or np.isnan(v)) and not v >= 0:
-            raise ValueError("Distance values must be >= 0.")
-        return v
+        return _validator(v, error_message="Distance values must be >= 0.")
 
     COLUMN_LABELS: ClassVar[dict] = {
         "station_key": ["stn_pk"],
@@ -69,9 +87,7 @@ class ControlPointModel(BaseModel):
 
     @field_validator("sx", "sy", "sz")
     def check_sigma(cls, v):
-        if not (v is None or np.isnan(v)) and not (v >= 0 or v == -1):
-            raise ValueError("Sigma values must be >= 0 or -1.")
-        return v
+        _validator(v, enable_minus_one=True)
 
     COLUMN_LABELS: ClassVar[dict] = {
         "point_label": ["id"],
@@ -97,6 +113,4 @@ class StationModel(BaseModel):
 
     @field_validator("stn_sh")
     def check_sigma(cls, v):
-        if not (v is None or np.isnan(v)) and not v >= 0:
-            raise ValueError("Sigma values must be >= 0.")
-        return v
+        return _validator(v)
