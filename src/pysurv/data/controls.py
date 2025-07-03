@@ -53,6 +53,14 @@ class Controls(gpd.GeoDataFrame):
 
         return super().__getitem__(name)
 
+    def _get_crs_from_user(self, crs=None, epsg=None):
+        from pyproj import CRS
+
+        if crs is not None:
+            return CRS.from_user_input(crs)
+        elif epsg is not None:
+            return CRS.from_epsg(epsg)
+
     def iterfeatures(
         self,
         na="null",
@@ -76,30 +84,6 @@ class Controls(gpd.GeoDataFrame):
         )
         return features_generator
 
-    def to_crs(self, crs=None, epsg=None, inplace=False):
-        new_geom = self.geometry.to_crs(crs=crs, epsg=epsg)
-        new_coords = new_geom.get_coordinates(include_z=True)
-
-        if not all(new_geom.is_valid):
-            warnings.warn(
-                "Some of the features have invalid geometry. Please check the results."
-            )
-
-        gdf = self if inplace else self.copy()
-        gdf.set_crs(new_geom.crs, inplace=True)
-        gdf[self.coordinates_columns] = new_coords[self.coordinates_columns]
-
-        if not inplace:
-            return gdf
-
-    def _get_crs_from_user(self, crs=None, epsg=None):
-        from pyproj import CRS
-
-        if crs is not None:
-            return CRS.from_user_input(crs)
-        elif epsg is not None:
-            return CRS.from_epsg(epsg)
-
     def set_crs(self, crs=None, epsg=None, inplace=False, allow_override=False):
         crs = self._get_crs_from_user(crs=crs, epsg=epsg)
 
@@ -116,6 +100,22 @@ class Controls(gpd.GeoDataFrame):
         gdf._geometry_crs = crs
 
         assert gdf._geometry_crs == gdf.geometry.crs
+
+        if not inplace:
+            return gdf
+
+    def to_crs(self, crs=None, epsg=None, inplace=False):
+        new_geom = self.geometry.to_crs(crs=crs, epsg=epsg)
+        new_coords = new_geom.get_coordinates(include_z=True)
+
+        if not all(new_geom.is_valid):
+            warnings.warn(
+                "Some of the features have invalid geometry. Please check the results."
+            )
+
+        gdf = self if inplace else self.copy()
+        gdf.set_crs(new_geom.crs, inplace=True)
+        gdf[self.coordinates_columns] = new_coords[self.coordinates_columns]
 
         if not inplace:
             return gdf
