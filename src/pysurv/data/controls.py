@@ -1,24 +1,26 @@
+import warnings
+
 import geopandas as gpd
 import numpy as np
-import pandas as pd
 from shapely.errors import DimensionError
 
-from pysurv.exceptions import GeometryCreationError
 from pysurv.models import ControlPointModel
 
 
 class Controls(gpd.GeoDataFrame):
-    def __init__(self, data=None, *args, swap_xy=False, crs=None, **kwargs):
-        if {"x", "y", "z"}.issubset(data.columns):
-            self._init_with_3D_geometry(data=data, *args, crs=None, **kwargs)
-        elif {"x", "y"}.issubset(data.columns):
-            self._init_with_2D_geometry(data=data, *args, crs=None, **kwargs)
-        elif {"z"}.issubset(data.columns):
-            self._init_with_1D_geometry(data=data, *args, crs=None, **kwargs)
-        else:
-            self._init_with_no_geometry(data=data, *args, crs=None, **kwargs)
+    def __init__(
+        self,
+        data=None,
+        *args,
+        swap_xy=False,
+        crs=None,
+        geometry_name="geometry",
+        **kwargs,
+    ):
+        super().__init__(data, *args, **kwargs)
 
-        self._validate_geometry_creation()
+        self._geometry_column_name = geometry_name
+        self._geometry_crs = self._get_crs_from_user(crs=crs, epsg=None)
 
         if {"id"}.issubset(self.columns):
             self.set_index(["id"], inplace=True)
@@ -26,112 +28,178 @@ class Controls(gpd.GeoDataFrame):
         if swap_xy:
             self.swap_xy()
 
-    def _init_with_3D_geometry(self, data=None, *args, crs=None, **kwargs):
-        super().__init__(
-            data,
-            *args,
-            geometry=gpd.points_from_xy(
-                data.pop("x"), data.pop("y"), data.pop("z"), crs=crs
-            ),
-            **kwargs,
+    def __contains__(self, key):
+        if key == self._geometry_column_name:
+            return True
+        return super().__contains__(key)
+
+    def __getattr__(self, name):
+        if name == self._geometry_column_name:
+            return self.geometry
+        else:
+            super().__getattr__(name)
+
+    def __getitem__(self, name):
+        if isinstance(name, str) and name == self._geometry_column_name:
+            return self.geometry
+
+        if isinstance(name, list) and self._geometry_column_name in name:
+            name.remove(self._geometry_column_name)
+            geometry_name = self._geometry_column_name
+            crs = self._geometry_crs
+            frame = super().__getitem__(name)
+            frame_with_geom = frame.join(self.geometry)
+            return Controls(frame_with_geom, crs=crs, geometry_name=geometry_name)
+
+        return super().__getitem__(name)
+
+    def iterfeatures(
+        self,
+        na="null",
+        include_coordinates_columns=False,
+        show_bbox=False,
+        drop_id=False,
+    ):
+        data = (
+            self
+            if include_coordinates_columns
+            else self.drop(columns=self.coordinates_columns)
         )
+        geometry = self.geometry
+        crs = self._geometry_crs
 
-    def _init_with_2D_geometry(self, data=None, *args, crs=None, **kwargs):
-        super().__init__(
-            data,
-            *args,
-            geometry=gpd.points_from_xy(data.pop("x"), data.pop("y"), crs=crs),
-            **kwargs,
+        gdf = gpd.GeoDataFrame(data, geometry=geometry, crs=crs)
+        gdf.rename_geometry(self._geometry_column_name, inplace=True)
+
+        features_generator = gdf.iterfeatures(
+            na=na, show_bbox=show_bbox, drop_id=drop_id
         )
+        return features_generator
 
-    def _init_with_1D_geometry(self, data=None, *args, crs=None, **kwargs):
-        super().__init__(
-            data,
-            *args,
-            geometry=gpd.points_from_xy(np.inf, np.inf, data.pop("z"), crs=crs),
-            **kwargs,
-        )
+    def to_crs(self, crs=None, epsg=None, inplace=False):
+        new_geom = self.geometry.to_crs(crs=crs, epsg=epsg)
+        new_coords = new_geom.get_coordinates(include_z=True)
 
-    def _init_with_no_geometry(self, data=None, *args, crs=None, **kwargs):
-        super().__init__(data, *args, crs=crs, **kwargs)
-
-    def _validate_geometry_creation(self):
-        if any(col in self.columns for col in ["x", "y", "z"]):
-            cols = [col for col in ["x", "y", "z"] if col in self.columns]
-            raise GeometryCreationError(
-                f"Geometry was not created from column with coordinates: {cols}"
+        if not all(new_geom.is_valid):
+            warnings.warn(
+                "Some of the features have invalid geometry. Please check the results."
             )
+
+        gdf = self if inplace else self.copy()
+        gdf.set_crs(new_geom.crs, inplace=True)
+        gdf[self.coordinates_columns] = new_coords[self.coordinates_columns]
+
+        if not inplace:
+            return gdf
+
+    def _get_crs_from_user(self, crs=None, epsg=None):
+        from pyproj import CRS
+
+        if crs is not None:
+            return CRS.from_user_input(crs)
+        elif epsg is not None:
+            return CRS.from_epsg(epsg)
+
+    def set_crs(self, crs=None, epsg=None, inplace=False, allow_override=False):
+        crs = self._get_crs_from_user(crs=crs, epsg=epsg)
+
+        if (
+            not allow_override
+            and self._geometry_crs is not None
+            and self._geometry_crs == crs
+        ):
+            raise ValueError(
+                "Passed crs not valid or already exists with the same value."
+            )
+
+        gdf = self if inplace else self.copy()
+        gdf._geometry_crs = crs
+
+        assert gdf._geometry_crs == gdf.geometry.crs
+
+        if not inplace:
+            return gdf
+
+    def rename_geometry(self, col, inplace=False):
+
+        gdf = self if inplace else self.copy()
+
+        name = col.strip()
+
+        if not name.isidentifier():
+            raise ValueError("Name is not valid identifier.")
+
+        if gdf._geometry_column_name != "geometry":
+            gdf.__delattr__(gdf._geometry_column_name)
+
+        gdf._geometry_column_name = name
+        gdf.__setattr__(name, gdf.geometry)
+
+        if not inplace:
+            return gdf
+
+    @property
+    def geometry(self):
+
+        geom = self[self.coordinates_columns].dropna(how="all")
+
+        if "x" not in geom.columns:
+            geom["x"] = np.inf
+        if "y" not in geom.columns:
+            geom["y"] = np.inf
+
+        return gpd.GeoSeries(
+            gpd.points_from_xy(**geom),
+            index=geom.index,
+            crs=self._geometry_crs,
+            name=self._geometry_column_name,
+        )
+
+    @geometry.setter
+    def geometry(self, value):
+        warnings.warn(
+            "Controls GeoDataFrame uses virtual geometry. Use coordinate columns instead."
+        )
 
     @property
     def x(self):
-        x_geom = self.geometry.x
-        if np.all(x_geom == np.inf) or np.all(x_geom.isna()):
+        if "x" not in self.coordinates_columns:
             raise DimensionError("No 'x' geometry column.")
-        return x_geom.where(x_geom != np.inf)
+        return self["x"]
 
     @property
     def y(self):
-        y_geom = self.geometry.y
-        if np.all(y_geom == np.inf) or np.all(y_geom.isna()):
+        if "y" not in self.coordinates_columns:
             raise DimensionError("No 'y' geometry column.")
-        return y_geom.where(y_geom != np.inf)
+        return self["y"]
 
     @property
     def z(self):
-        z_geom = self.geometry.z
-        if np.all(z_geom == np.inf) or np.all(z_geom.isna()):
+        if "z" not in self.coordinates_columns:
             raise DimensionError("No 'z' geometry column.")
-        return z_geom.where(z_geom != np.inf)
+        return self["z"]
 
     @property
-    def geometry_columns(self, include_z=True):
-        return self.get_control_coordinates(include_z=include_z).columns
+    def coordinates(self):
+        return self[self.coordinates_columns]
+
+    @property
+    def coordinates_columns(self):
+        return self.columns[
+            self.columns.isin(ControlPointModel.COLUMN_LABELS["coordinates"])
+        ]
 
     @property
     def sigma_columns(self):
         return self.columns[self.columns.isin(ControlPointModel.COLUMN_LABELS["sigma"])]
 
     def swap_xy(self):
-        swapped_xy = False
-        if {"x", "y", "z"}.issubset(self.geometry_columns):
-            self._swap_xy_3D_point()
-            swapped_xy = True
-        elif {"x", "y"}.issubset(self.geometry_columns):
-            self._swap_xy_2D_point()
-            swapped_xy = True
-
-        if swapped_xy:
-            self._swap_xy_sigma()
-
-    def _swap_xy_3D_point(self):
-        self.geometry = gpd.points_from_xy(self.y, self.x, self.z)
-
-    def _swap_xy_2D_point(self):
-        self.geometry = gpd.points_from_xy(self.y, self.x)
-
-    def _swap_xy_sigma(self):
-        self.rename(columns={"sx": "sy", "sy": "sx"}, inplace=True)
-
-    def get_control_coordinates(self, include_z=True):
-        coordinates = self.geometry.get_coordinates(include_z=include_z)
-        coordinates = coordinates.where(coordinates != np.inf)
-
-        return coordinates.dropna(axis=1, how="all")
-
-    def display(self, include_z=True):
-        table = self.get_control_coordinates(include_z=include_z).join(
-            self.drop(columns=["geometry"])
-        )
-        if not include_z:
-            table.drop(
-                columns=[
-                    "sz",
-                ],
-                errors="ignore",
-                inplace=True,
+        if {"x", "y"}.issubset(self.coordinates_columns):
+            self.rename(
+                columns={"x": "y", "y": "x", "sx": "sy", "sy": "sx"}, inplace=True
             )
-        return table
 
     def copy(self, *args, **kwargs):
+        crs = self._geometry_crs
         gdf = super().copy(*args, **kwargs)
-        return Controls(gdf, swap_xy=False)
+        return Controls(gdf, crs=crs, swap_xy=False)
