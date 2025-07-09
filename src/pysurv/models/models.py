@@ -1,6 +1,6 @@
 from typing import ClassVar
 
-import numpy as np
+import pandas as pd
 from pydantic import BaseModel, Field, field_validator
 
 
@@ -11,7 +11,7 @@ def validate_angle_unit(v):
 
 
 def _validator(v, enable_minus_one=False, error_message="Sigma values must be >= 0."):
-    is_empty = v is None or np.isnan(v)
+    is_empty = pd.isna(v)
     is_negative = not v >= 0
 
     error_condition = not is_empty and is_negative
