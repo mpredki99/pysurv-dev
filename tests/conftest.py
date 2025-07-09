@@ -109,7 +109,7 @@ def invalid_measurements_data():
         "a": [0.0000, "Invalid type", 200.0000, 300.0000, None],
         "sa": [0.0001, None, -0.0100, "Invalid type", None],
         "hz": ["Invalid type", None, 345.6789, 135.7890, 258.1369],
-        "shz": [None, None, -0.0020, "Invalid type", None],
+        "shz": [None, 0.0010, -0.0020, "Invalid type", None],
         "vz": [0.0000, "Invalid type", 200.0000, 300.0000, None],
         "svz": [-0.0100, 0.0030, None, "Invalid type", None],
         "vh": [-100.0000, 0.0000, 100.0000, None, "Invalid type"],
