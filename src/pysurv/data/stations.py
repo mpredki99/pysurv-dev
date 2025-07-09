@@ -17,20 +17,17 @@ class Stations(pd.DataFrame):
     def _constructor(self):
         return Stations
 
-    def approx_oreintation_constant(self, hz, controls):
-        stn_pk_loc = hz.index.names.index("stn_pk")
-        trg_id_loc = hz.index.names.index("trg_id")
-
-        for idx, hz_value in hz.items():
-            stn_pk = idx[stn_pk_loc]
-            stn_id = self.at[stn_pk, "stn_id"]
-            trg_id = idx[trg_id_loc]
-
-            x_first, y_first = controls.at[stn_id, "x"], controls.at[stn_id, "y"]
-            x_second, y_second = controls.at[trg_id, "x"], controls.at[trg_id, "y"]
-            self.at[stn_pk, "orientation"] = (
-                azimuth(x_first, y_first, x_second, y_second) - hz_value
-            )
+    def append_oreintation_constant(self, data, controls):
+        df1 = data.copy()
+        data = data.reset_index()
+        data.insert(1, "stn_id", data.stn_pk.map(self.stn_id))
+        
+        cols = ["stn_id", "trg_id"]
+        for point in cols:
+            data = data.merge(controls[["x", "y"]], how='left', left_on=point, right_on="id", suffixes=[f"_{col}" for col in cols])
+        data = data.set_index("stn_pk")
+        
+        self["orientation"] = azimuth(data["x_stn_id"], data["y_stn_id"], data["x_trg_id"], data["y_trg_id"]) - data["hz"]
 
     def display(self, angle_unit=None):
         col = "orientation"

@@ -30,9 +30,4 @@ def azimuth(x_first, y_first, x_second, y_second):
     dx = x_second - x_first
     dy = y_second - y_first
 
-    if dx == 0 and dy == 0:
-        raise ValueError(
-            "Start and end points overlap. Azimuth for point is indefinite."
-        )
-
-    return np.arctan2(dy, dx) % (2 * np.pi)
+    return np.mod(np.arctan2(dy, dx), 2 * np.pi)
