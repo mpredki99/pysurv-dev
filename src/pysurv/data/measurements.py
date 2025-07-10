@@ -70,6 +70,14 @@ class Measurements(pd.DataFrame):
     @property
     def sigma_columns(self):
         return self.linear_sigma_columns.append(self.angular_sigma_columns)
+    
+    @property
+    def measurement_values(self):
+        return self[self.measurements_columns]
+    
+    @property
+    def sigma_values(self):
+        return self[self.sigma_columns]
 
     @property
     def angle_unit(self):
