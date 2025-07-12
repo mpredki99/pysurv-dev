@@ -144,14 +144,14 @@ class BaseReader(ABC):
         message = (
             f"Validation errors in {dataset_name} dataset:\n{pformat(errors, indent=0)}"
         )
-        
+
         if errors and self._validation_mode == "raise":
             raise InvalidDataError(message)
         elif errors and self._validation_mode == "skip":
             print(message + "\n" + "Invalid values  were skipped.")
-        
-        dataset.dropna(axis=0, how='all', inplace=True)
-        dataset.dropna(axis=1, how='all', inplace=True)
-        
+
+        dataset.dropna(axis=0, how="all", inplace=True)
+        dataset.dropna(axis=1, how="all", inplace=True)
+
         if dataset is None or dataset.empty:
             raise EmptyDatasetError(f"{dataset_name} dataset is empty.")
