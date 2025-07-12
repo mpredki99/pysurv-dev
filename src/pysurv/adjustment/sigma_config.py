@@ -31,6 +31,9 @@ class SigmaRow:
             return super().__getattr__(key)
         return self._data.get(key)
 
+    def __getitem__(self, key):
+        return self._data[key]
+
     def __str__(self) -> str:
         return self._data.__str__()
 
@@ -101,6 +104,9 @@ class SigmaConfig:
             raise ValueError("Can not delete 'default' index.")
         else:
             super().__delattr__(key)
+
+    def __getitem__(self, key):
+        return self.__getattribute__(key)
 
     def __repr__(self) -> str:
         return self._dataframe
