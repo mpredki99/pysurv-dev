@@ -11,10 +11,9 @@ class Measurements(pd.DataFrame):
         self._angle_unit = (
             config.angle_unit if angle_unit is None else validate_angle_unit(angle_unit)
         )
-
         index_columns = ["stn_pk", "trg_id"]
         optional_index_columns = [
-            col for col in self.columns if col in ["trg_h", "trg_sh"]
+            col for col in ["trg_h", "trg_sh"] if col in self.columns
         ]
         index_columns.extend(optional_index_columns)
 
@@ -26,7 +25,6 @@ class Measurements(pd.DataFrame):
     def _constructor(self):
         return Measurements
 
-    # Public interface
     @property
     def linear_measurements_columns(self):
         return self.columns[
@@ -62,19 +60,21 @@ class Measurements(pd.DataFrame):
     @property
     def angular_columns(self):
         return self.angular_measurements_columns.append(self.angular_sigma_columns)
-    
+
     @property
     def measurements_columns(self):
-        return self.linear_measurements_columns.append(self.angular_measurements_columns)
-    
+        return self.linear_measurements_columns.append(
+            self.angular_measurements_columns
+        )
+
     @property
     def sigma_columns(self):
         return self.linear_sigma_columns.append(self.angular_sigma_columns)
-    
+
     @property
     def measurement_values(self):
         return self[self.measurements_columns]
-    
+
     @property
     def sigma_values(self):
         return self[self.sigma_columns]
@@ -101,3 +101,6 @@ class Measurements(pd.DataFrame):
                 measurements[self.angular_columns], unit=self.angle_unit
             )
         return measurements
+
+    def to_dataframe(self):
+        return pd.DataFrame(self)
