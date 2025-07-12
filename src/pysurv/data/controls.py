@@ -203,3 +203,6 @@ class Controls(gpd.GeoDataFrame):
         crs = self._geometry_crs
         gdf = super().copy(*args, **kwargs)
         return Controls(gdf, crs=crs, swap_xy=False)
+
+    def to_geodataframe(self):
+        return gpd.GeoDataFrame(self, geometry=self.geometry, crs=self._geometry_crs)
