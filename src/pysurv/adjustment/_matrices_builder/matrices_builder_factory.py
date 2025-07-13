@@ -1,5 +1,5 @@
-from .memory_strategy import MemoryStrategy
-from .speed_strategy import SpeedStrategy
+from .memory_strategy.memory_strategy import MemoryStrategy
+from .speed_strategy.speed_strategy import SpeedStrategy
 
 strategies = {"speed": SpeedStrategy, "memory_safe": MemoryStrategy}
 

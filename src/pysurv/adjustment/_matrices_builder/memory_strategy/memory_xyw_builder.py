@@ -1,15 +1,12 @@
 import numpy as np
 import pandas as pd
 
-from .xyw_build_strategy import LSQMatrixBuildStrategy
 
-
-class MemoryStrategy(LSQMatrixBuildStrategy):
+class MemoryXYWBuilder:
     def __init__(self, parent):
-        super().__init__(parent)
-
-    def build(self):
-
+        self._parent = parent
+        
+    def build_xyw(self, calculate_weights):
         measurements = self._parent.dataset.measurements
         controls = self._parent.dataset.controls
         stations = self._parent.dataset.stations
@@ -22,7 +19,7 @@ class MemoryStrategy(LSQMatrixBuildStrategy):
             else None
         )
 
-        X, Y, W = self._initialize_xyw_matrices()
+        X, Y, W = self._parent.initialize_xyw_matrices(calculate_weights)
 
         eq_row = 0
         for idx in measurements.index:
@@ -61,7 +58,7 @@ class MemoryStrategy(LSQMatrixBuildStrategy):
                         self._parent.orientations_index_in_x_matrix[stn_pk]
                     )
 
-                self.apply_observation_function(
+                self._parent.apply_observation_function(
                     meas_type,
                     meas_value,
                     coord_diff,
@@ -71,21 +68,19 @@ class MemoryStrategy(LSQMatrixBuildStrategy):
                     Y,
                 )
 
-                if self.calculate_weights:
+                if calculate_weights:
                     sigma_value = self._get_sigma_value(idx, meas_type)
                     W[eq_row] = 1 / sigma_value**2
 
                 eq_row += 1
 
-        if W is None:
-            return X, Y
-        return X, Y, np.diag(W)
+        return X, Y, np.diag(W) if W is not None else None
 
     def _get_sigma_value(self, idx, meas_type):
         sigma_type = f"s{meas_type}"
         sigma_value = None
         if sigma_type in self._parent.dataset.measurements.sigma_columns:
-            sigma_value = self._parent.dataset.measurement.at[idx, sigma_type]
+            sigma_value = self._parent.dataset.measurements.at[idx, sigma_type]
 
         return (
             sigma_value

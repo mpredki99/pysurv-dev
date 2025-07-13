@@ -1,13 +1,11 @@
 import numpy as np
 
-from .xyw_build_strategy import LSQMatrixBuildStrategy
 
-
-class SpeedStrategy(LSQMatrixBuildStrategy):
+class SpeedXYWBuilder:
     def __init__(self, parent):
-        super().__init__(parent)
-
-    def build(self):
+        self._parent = parent
+        
+    def build_xyw(self, calculate_weights):
         stations_columns = self._parent.dataset.stations.columns
 
         data, idx_names = self._prepare_subset(
@@ -16,11 +14,11 @@ class SpeedStrategy(LSQMatrixBuildStrategy):
         data = self._melt_subset(data, idx_names, "meas")
         data.dropna(subset="meas_value", inplace=True)
 
-        if self.calculate_weights:
+        if calculate_weights:
             sigmas, _ = self._prepare_subset(
                 self._parent.dataset.measurements.sigma_values
             )
-            self._fill_sigmas(sigmas)
+            self._fill_sigmas(sigmas, self._parent.dataset.measurements.measurements_columns)
             sigmas = self._melt_subset(sigmas, idx_names, "sigma")
 
             on_cols = idx_names.append("meas_type")
@@ -42,7 +40,7 @@ class SpeedStrategy(LSQMatrixBuildStrategy):
         if "orientation" in stations_columns:
             data = self._merge_orientations(data)
 
-        X, Y, W = self._initialize_xyw_matrices()
+        X, Y, W = self._parent.initialize_xyw_matrices(calculate_weights)
 
         for eq_row, row in enumerate(data.itertuples(index=False)):
             coord_diff = {
@@ -60,7 +58,7 @@ class SpeedStrategy(LSQMatrixBuildStrategy):
                 "z_trg": getattr(row, "z_trg", None),
                 "orientation_idx": getattr(row, "orientation_idx", None),
             }
-            self.apply_observation_function(
+            self._parent.apply_observation_function(
                 getattr(row, "meas_type"),
                 getattr(row, "meas_value"),
                 coord_diff,
@@ -70,7 +68,7 @@ class SpeedStrategy(LSQMatrixBuildStrategy):
                 Y,
             )
 
-            if self.calculate_weights:
+            if calculate_weights:
                 W[eq_row] = 1 / getattr(row, "sigma_value") ** 2
 
         return X, Y, np.diag(W) if W is not None else None
@@ -93,12 +91,12 @@ class SpeedStrategy(LSQMatrixBuildStrategy):
 
         return subset.to_dataframe(), idx_names
 
-    def _fill_sigmas(self, sigmas):
-        measurement_columns = self._parent.dataset.measurements.measurements_columns
-        for col in measurement_columns:
+    def _fill_sigmas(self, sigmas, columns):
+        for col in columns:
             sigma_col = f"s{col}"
             if sigma_col in sigmas:
-                sigmas[col] = sigmas[col].fillna(self._default_sigmas[sigma_col])
+                sigmas[col] = sigmas[sigma_col].fillna(self._parent.default_sigmas[sigma_col])
+                sigmas.drop(columns=sigma_col, inplace=True)
             else:
                 sigmas[col] = self._parent.default_sigmas[sigma_col]
 
@@ -144,5 +142,4 @@ class SpeedStrategy(LSQMatrixBuildStrategy):
         data = data.merge(
             self._parent.orientations_index_in_x_matrix, how="left", on="stn_pk"
         )
-
         return data

@@ -1,35 +1,46 @@
 import numpy as np
 import pandas as pd
 
-from ._xyw_matrices_builder.xyw_build_strategy_factory import get_strategy
+from pysurv.models.models import validate_method
+from ._matrices_builder.inner_constraints_builder import InnerConstraintsBuilder
+from ._matrices_builder.matrices_builder_factory import get_strategy
+from .robust import *
 from .sigma_config import sigma_config
 
 
 class LSQMatrices:
 
     def __init__(
-        self, dataset, method="weighted", default_sigmas=None, comutations_priority=None
+        self,
+        dataset,
+        method="weighted",
+        free_adjustment=None,
+        default_sigmas=None,
+        comutations_priority=None,
     ):
         self._dataset = dataset
         self._X = None
         self._Y = None
         self._W = None
 
+        self._inner_constraints = None
+        self._R = None
+        
+        self._sW = None
+        self._sX = None
+
         default_sigmas = default_sigmas or sigma_config.default_index
         self._default_sigmas = sigma_config[default_sigmas]
 
-        self._method = self._validate_method(method)
+        self._method = validate_method(method)
 
-        self._xyw_build_strategy = get_strategy(
+        self._matrices_build_strategy = get_strategy(
             parent=self,
             name=comutations_priority,
         )
 
         self._cordinates_index_in_x_matrix = None
         self._orientations_index_in_x_matrix = None
-
-    def _validate_method(self, method):
-        return method
 
     @property
     def dataset(self):
@@ -101,17 +112,39 @@ class LSQMatrices:
             "orientation_idx"
         ).astype(int)
 
-    def build_matrices(self):
+    def build_xyw_matrices(self):
         self.update_stations_orientation()
 
         self.coordinates_index()
         self.orientation_index()
 
-        self._xyw_build_strategy.calculate_weights = self._method != "ordinary"
-        self._X, self._Y, self._W = self._xyw_build_strategy.build()
+        calculate_w = self._method != "ordinary"
+        self._X, self._Y, self._W = self._matrices_build_strategy.build_xyw(calculate_weights=calculate_w)
         print(self._X, self._Y, self._W)
-
+        
+        
     def update_xy_matrices(self):
         self.update_stations_orientation()
-        self._xyw_build_strategy.calculate_weights = False
-        self._X, self._Y = self._xyw_build_strategy.build()
+
+        self._X, self._Y, _ = self._matrices_build_strategy.build_xyw(calculate_weights=False)
+        
+    def update_w_matrix(self):
+        pass
+
+    def apply_inner_constraints(self):
+        inner_constraints_builder = InnerConstraintsBuilder(parent=self)
+        self._R, self._inner_constraints = inner_constraints_builder.build_r_matrix()
+        print(self._R, self._inner_constraints)
+    
+    def build_sw_matrix(self):
+        self._sW = self._matrices_build_strategy.build_sw()
+        print(self._sW)
+        
+    def build_sx_matrix(self):
+        self._sX = np.zeros(self._X.shape[1])
+        coord_idx = self._cordinates_index_in_x_matrix.values.flatten() 
+        coord_idx = coord_idx[coord_idx != -1]
+        self._sX[coord_idx] = 1
+        print(self._sX)
+        
+
