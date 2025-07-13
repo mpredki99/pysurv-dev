@@ -1,3 +1,5 @@
+from warnings import warn
+
 import pandas as pd
 
 from pysurv.basic import from_rad, to_rad
@@ -96,14 +98,16 @@ class SigmaConfig:
         sz=0.01,
     )
 
-    def __init__(self) -> None:
+    def __init__(self, default_index="default") -> None:
+        self._default_index = default_index
         self.restore_default()
 
     def __delattr__(self, key: str) -> None:
         if key == "default":
             raise ValueError("Can not delete 'default' index.")
-        else:
-            super().__delattr__(key)
+        elif key == self.default_index:
+            self.default_index = "default"
+        super().__delattr__(key)
 
     def __getitem__(self, key):
         return self.__getattribute__(key)
@@ -118,6 +122,21 @@ class SigmaConfig:
     def _dataframe(self):
         data = pd.DataFrame({idx: row._data for idx, row in self.__dict__.items()})
         return data.T
+
+    @property
+    def default_index(self):
+        return self._default_index
+
+    @default_index.setter
+    def default_index(self, name):
+        if name not in self.__dict__.keys():
+            raise ValueError(f"Sigma config has no index: {name}")
+        self._default_index = name
+
+    @default_index.deleter
+    def default_index(self):
+        warn("Can not delete default_index property. Setted 'default' instead.")
+        self._default_index = "default"
 
     def _validate_name(self, name):
         if name is None:
