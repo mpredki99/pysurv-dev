@@ -3,6 +3,18 @@ from typing import ClassVar
 import pandas as pd
 from pydantic import BaseModel, Field, field_validator
 
+from pysurv.adjustment.robust import __all__ as robust_methods
+
+
+def validate_method(method):
+        valid_methods = ["ordinary", "weighted"]
+        valid_methods.extend(robust_methods)
+        if method not in valid_methods:
+            raise ValueError(
+                f"Invalid weighting method. Valid methods: {valid_methods}"
+            )
+        return method
+    
 
 def validate_angle_unit(v):
     if v not in ["rad", "grad", "gon", "deg"]:
