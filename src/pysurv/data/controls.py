@@ -182,7 +182,7 @@ class Controls(gpd.GeoDataFrame):
     @property
     def coordinates(self):
         return self[self.coordinates_columns]
-    
+
     @property
     def coordinates_sigma(self):
         return self[self.sigma_columns]

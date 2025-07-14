@@ -148,7 +148,7 @@ class BaseReader(ABC):
         if errors and self._validation_mode == "raise":
             raise InvalidDataError(message)
         elif errors and self._validation_mode == "skip":
-            print(message + "\n" + "Invalid values  were skipped.")
+            print(message + "\n" + "Invalid values were skipped.")
 
         dataset.dropna(axis=0, how="all", inplace=True)
         dataset.dropna(axis=1, how="all", inplace=True)
