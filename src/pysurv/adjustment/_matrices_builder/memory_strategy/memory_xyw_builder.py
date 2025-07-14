@@ -1,15 +1,19 @@
 import numpy as np
-import pandas as pd
+
+from ..matrix_xyw_builder import MatrixXYWBuilder
 
 
-class MemoryXYWBuilder:
-    def __init__(self, parent):
-        self._parent = parent
-        
-    def build_xyw(self, calculate_weights):
-        measurements = self._parent.dataset.measurements
-        controls = self._parent.dataset.controls
-        stations = self._parent.dataset.stations
+class MemoryXYWBuilder(MatrixXYWBuilder):
+    def __init__(self, dataset, matrix_x_indexer, default_sigmas):
+        super().__init__(dataset, matrix_x_indexer, default_sigmas)
+
+    def build(self, calculate_weights):
+        measurements = self._dataset.measurements
+        controls = self._dataset.controls
+        stations = self._dataset.stations
+
+        coord_index = self._matrix_x_indexer.coordinates_indices
+        orientation_index = self._matrix_x_indexer.orientations_indices
 
         stn_pk_loc = measurements.index.names.index("stn_pk")
         trg_id_loc = measurements.index.names.index("trg_id")
@@ -19,7 +23,7 @@ class MemoryXYWBuilder:
             else None
         )
 
-        X, Y, W = self._parent.initialize_xyw_matrices(calculate_weights)
+        X, Y, W = self._initialize_xyw_matrices(calculate_weights)
 
         eq_row = 0
         for idx in measurements.index:
@@ -45,24 +49,19 @@ class MemoryXYWBuilder:
                 if np.isnan(meas_value):
                     continue
 
-                matrix_x_col_indices = {
-                    f"{coord}_{label}": self._parent.cordinates_index_in_x_matrix.at[
-                        ctrl_id, coord
-                    ]
+                matrix_x_col_index = {
+                    f"{coord}_{label}": coord_index.at[ctrl_id, coord]
                     for ctrl_id, label in zip([stn_id, trg_id], ["stn", "trg"])
-                    for coord in controls.coordinates.columns
+                    for coord in controls.coordinates_columns
                 }
                 if meas_type == "hz":
                     coord_diff["orientation"] = stations.orientation[stn_pk]
-                    matrix_x_col_indices["orientation_idx"] = (
-                        self._parent.orientations_index_in_x_matrix[stn_pk]
-                    )
-
-                self._parent.apply_observation_function(
+                    matrix_x_col_index["orientation_idx"] = orientation_index[stn_pk]
+                self._apply_observation_function(
                     meas_type,
                     meas_value,
                     coord_diff,
-                    matrix_x_col_indices,
+                    matrix_x_col_index,
                     X[eq_row, :],
                     eq_row,
                     Y,
@@ -78,12 +77,7 @@ class MemoryXYWBuilder:
 
     def _get_sigma_value(self, idx, meas_type):
         sigma_type = f"s{meas_type}"
-        sigma_value = None
-        if sigma_type in self._parent.dataset.measurements.sigma_columns:
-            sigma_value = self._parent.dataset.measurements.at[idx, sigma_type]
-
-        return (
-            sigma_value
-            if not pd.isna(sigma_value)
-            else self._parent.default_sigmas[sigma_type]
-        )
+        if sigma_type in self._dataset.measurements.sigma_columns:
+            return self._dataset.measurements.at[idx, sigma_type]
+        else:
+            return self._default_sigmas[sigma_type]

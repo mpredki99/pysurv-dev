@@ -1,11 +1,9 @@
-import numpy as np
-import pandas as pd
-
-from pysurv.models.models import validate_method
-from ._matrices_builder.inner_constraints_builder import InnerConstraintsBuilder
-from ._matrices_builder.matrices_builder_factory import get_strategy
-from .robust import *
-from .sigma_config import sigma_config
+from ._matrices_builder.inner_constraints_builder.matrix_r_builder import MatrixRBuilder
+from ._matrices_builder.inner_constraints_builder.matrix_sx_builder import (
+    MatrixSXBuilder,
+)
+from ._matrices_builder.matrix_x_indexer import MatrixXIndexer
+from ._matrices_builder.xyw_sw_build_strategy_factory import get_strategy
 
 
 class LSQMatrices:
@@ -13,138 +11,123 @@ class LSQMatrices:
     def __init__(
         self,
         dataset,
-        method="weighted",
-        free_adjustment=None,
-        default_sigmas=None,
-        comutations_priority=None,
+        calculate_weights=True,
+        default_sigmas_index=None,
+        computations_priority=None,
     ):
         self._dataset = dataset
+        self._calculate_weights = calculate_weights
+
+        self._matrix_x_indexer = MatrixXIndexer(self._dataset)
         self._X = None
         self._Y = None
         self._W = None
+        self._sW = None
 
         self._inner_constraints = None
         self._R = None
-        
-        self._sW = None
         self._sX = None
 
-        default_sigmas = default_sigmas or sigma_config.default_index
-        self._default_sigmas = sigma_config[default_sigmas]
-
-        self._method = validate_method(method)
-
-        self._matrices_build_strategy = get_strategy(
-            parent=self,
-            name=comutations_priority,
+        self._matrices_xyw_sw_build_strategy = get_strategy(
+            self._dataset,
+            self._matrix_x_indexer,
+            default_sigmas_index,
+            name=computations_priority,
         )
 
-        self._cordinates_index_in_x_matrix = None
-        self._orientations_index_in_x_matrix = None
+        if "hz" in self.dataset.measurements.angular_measurements_columns:
+            self._update_stations_orientation()
 
     @property
     def dataset(self):
         return self._dataset
 
     @property
+    def calculate_weights(self):
+        return self._calculate_weights
+
+    @property
+    def matrix_x_indexer(self):
+        return self._matrix_x_indexer
+
+    @property
     def matrix_X(self):
+        if self._X is None:
+            self._build_xyw_matrices()
         return self._X
 
     @property
     def matrix_Y(self):
+        if self._Y is None:
+            self._build_xyw_matrices()
         return self._Y
 
     @property
     def matrix_W(self):
+        if self._W is None and self._calculate_weights:
+            self._build_xyw_matrices()
         return self._W
 
     @property
-    def default_sigmas(self):
-        return self._default_sigmas
-
-    @property
-    def method(self):
-        return self._method
-
-    @property
-    def cordinates_index_in_x_matrix(self):
-        return self._cordinates_index_in_x_matrix
-
-    @property
-    def orientations_index_in_x_matrix(self):
-        return self._orientations_index_in_x_matrix
-
-    def update_stations_orientation(self):
-        if "hz" in self.dataset.measurements.angular_measurements_columns:
-            hz = self.dataset.measurements.hz.dropna()
-            stn_pk = hz.reset_index()["stn_pk"]
-            first_hz_occurence = stn_pk.drop_duplicates().index
-
-            self.dataset.stations.append_oreintation_constant(
-                hz.iloc[first_hz_occurence], self.dataset.controls
+    def matrix_sW(self):
+        if self._sW is None:
+            self._sW = self._matrices_xyw_sw_build_strategy.sw_builder.build(
+                self.matrix_X.shape[1]
             )
+        return self._sW
 
-    def coordinates_index(self):
-        coordinates = self._dataset.controls.coordinates
+    @property
+    def inner_constraints(self):
+        if self._inner_constraints is None:
+            self._apply_inner_constraints()
+        return self._inner_constraints
 
-        notna_coords = pd.notna(coordinates.values)
-        ctrl_idx = coordinates.values.flatten()
-        ctrl_idx = np.nan_to_num(ctrl_idx, nan=-1, neginf=-1, posinf=-1)
-        ctrl_idx[notna_coords.flatten()] = np.arange(notna_coords.sum().sum())
-        ctrl_idx = ctrl_idx.reshape(coordinates.shape).astype(int)
+    @property
+    def matrix_R(self):
+        if self._R is None:
+            self._apply_inner_constraints()
+        return self._R
 
-        self._cordinates_index_in_x_matrix = pd.DataFrame(
-            ctrl_idx, index=coordinates.index, columns=coordinates.columns
+    @property
+    def matrix_sX(self):
+        if self._sX is None:
+            matrix_sx_builder = MatrixSXBuilder(
+                self.dataset, self.matrix_x_indexer, self.matrix_X.shape[1]
+            )
+            self._sX = matrix_sx_builder.build()
+        return self._sX
+
+    def _build_xyw_matrices(self):
+        self._X, self._Y, self._W = (
+            self._matrices_xyw_sw_build_strategy.xyw_builder.build(
+                calculate_weights=self._calculate_weights
+            )
         )
 
-    def orientation_index(self):
-        if not "orientation" in self._dataset.stations.columns:
-            return
-        orientations = self._dataset.stations.orientation
+    def _apply_inner_constraints(self):
+        inner_constraints_builder = MatrixRBuilder(
+            self.dataset, self.matrix_x_indexer, self.matrix_X.shape[1]
+        )
+        self._R, self._inner_constraints = inner_constraints_builder.build()
 
-        notna_orientation = pd.notna(orientations)
-        orientations_idx = orientations.fillna(-1)
-        start_idx = self._cordinates_index_in_x_matrix.max().max() + 1
-        end_idx = start_idx + notna_orientation.sum().sum()
-        orientations_idx[notna_orientation] = np.arange(start_idx, end_idx)
+    def _update_stations_orientation(self):
+        hz = self._dataset.measurements.hz.dropna()
+        stn_pk = hz.reset_index()["stn_pk"]
+        first_hz_occurence = stn_pk.drop_duplicates().index
 
-        self._orientations_index_in_x_matrix = orientations_idx.rename(
-            "orientation_idx"
-        ).astype(int)
+        self._dataset.stations.append_oreintation_constant(
+            hz.iloc[first_hz_occurence], self.dataset.controls
+        )
 
-    def build_xyw_matrices(self):
-        self.update_stations_orientation()
-
-        self.coordinates_index()
-        self.orientation_index()
-
-        calculate_w = self._method != "ordinary"
-        self._X, self._Y, self._W = self._matrices_build_strategy.build_xyw(calculate_weights=calculate_w)
-        print(self._X, self._Y, self._W)
-        
-        
     def update_xy_matrices(self):
-        self.update_stations_orientation()
+        if "hz" in self.dataset.measurements.angular_measurements_columns:
+            self._update_stations_orientation()
+        self._X, self._Y, _ = self._matrices_xyw_sw_build_strategy.xyw_builder.build(
+            calculate_weights=False
+        )
 
-        self._X, self._Y, _ = self._matrices_build_strategy.build_xyw(calculate_weights=False)
-        
     def update_w_matrix(self):
         pass
 
-    def apply_inner_constraints(self):
-        inner_constraints_builder = InnerConstraintsBuilder(parent=self)
-        self._R, self._inner_constraints = inner_constraints_builder.build_r_matrix()
-        print(self._R, self._inner_constraints)
-    
-    def build_sw_matrix(self):
-        self._sW = self._matrices_build_strategy.build_sw()
-        print(self._sW)
-        
-    def build_sx_matrix(self):
-        self._sX = np.zeros(self._X.shape[1])
-        coord_idx = self._cordinates_index_in_x_matrix.values.flatten() 
-        coord_idx = coord_idx[coord_idx != -1]
-        self._sX[coord_idx] = 1
-        print(self._sX)
-        
-
+    def update_sw_matrix(self):
+        pass

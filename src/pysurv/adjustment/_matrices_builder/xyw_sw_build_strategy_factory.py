@@ -1,15 +1,15 @@
+from ..constants import MEMORY_THRESHOLD_GB
 from .memory_strategy.memory_strategy import MemoryStrategy
 from .speed_strategy.speed_strategy import SpeedStrategy
 
 strategies = {"speed": SpeedStrategy, "memory_safe": MemoryStrategy}
 
 
-def get_strategy(parent, name=None):
+def get_strategy(dataset, matrix_x_indexer, default_sigmas, name=None):
     global strategies
-    name = get_strategy_name(name, parent.dataset)
+    name = get_strategy_name(name, dataset)
     strategy_constructor = strategies[name]
-
-    return strategy_constructor(parent)
+    return strategy_constructor(dataset, matrix_x_indexer, default_sigmas)
 
 
 def get_strategy_name(name, dataset):
@@ -21,7 +21,7 @@ def get_strategy_name(name, dataset):
     stations_weight = dataset.stations.memory_usage(deep=True).sum()
 
     total_weight = measurements_weight + controls_weight + stations_weight
-    return "speed" if total_weight / (1024**3) < 1 else "memory_safe"
+    return "speed" if total_weight / (1024**3) < MEMORY_THRESHOLD_GB else "memory_safe"
 
 
 def _validate_strategy_name(name):

@@ -1,32 +1,30 @@
 import numpy as np
 
+from ..matrix_xyw_builder import MatrixXYWBuilder
 
-class SpeedXYWBuilder:
-    def __init__(self, parent):
-        self._parent = parent
-        
-    def build_xyw(self, calculate_weights):
-        stations_columns = self._parent.dataset.stations.columns
+
+class SpeedXYWBuilder(MatrixXYWBuilder):
+    def __init__(self, dataset, matrix_x_indexer, default_sigmas):
+        super().__init__(dataset, matrix_x_indexer, default_sigmas)
+
+    def build(self, calculate_weights):
+        stations_columns = self._dataset.stations.columns
 
         data, idx_names = self._prepare_subset(
-            self._parent.dataset.measurements.measurement_values
+            self._dataset.measurements.measurement_values
         )
         data = self._melt_subset(data, idx_names, "meas")
         data.dropna(subset="meas_value", inplace=True)
 
         if calculate_weights:
-            sigmas, _ = self._prepare_subset(
-                self._parent.dataset.measurements.sigma_values
-            )
-            self._fill_sigmas(sigmas, self._parent.dataset.measurements.measurements_columns)
+            sigmas, _ = self._prepare_subset(self._dataset.measurements.sigma_values)
+            self._fill_sigmas(sigmas, self._dataset.measurements.measurements_columns)
             sigmas = self._melt_subset(sigmas, idx_names, "sigma")
 
             on_cols = idx_names.append("meas_type")
             data = data.merge(sigmas, how="left", on=on_cols)
 
-        data = self._merge_with_controls(
-            data, self._parent.dataset.controls.coordinates
-        )
+        data = self._merge_with_controls(data, self._dataset.controls.coordinates)
         self._calculate_coord_differences(data)
         data.drop(
             columns=["x_stn", "y_stn", "z_stn", "x_trg", "y_trg", "z_trg"],
@@ -34,13 +32,13 @@ class SpeedXYWBuilder:
             errors="ignore",
         )
         data = self._merge_with_controls(
-            data, self._parent.cordinates_index_in_x_matrix
+            data, self._matrix_x_indexer.coordinates_indices
         )
 
         if "orientation" in stations_columns:
             data = self._merge_orientations(data)
 
-        X, Y, W = self._parent.initialize_xyw_matrices(calculate_weights)
+        X, Y, W = self._initialize_xyw_matrices(calculate_weights)
 
         for eq_row, row in enumerate(data.itertuples(index=False)):
             coord_diff = {
@@ -58,7 +56,7 @@ class SpeedXYWBuilder:
                 "z_trg": getattr(row, "z_trg", None),
                 "orientation_idx": getattr(row, "orientation_idx", None),
             }
-            self._parent.apply_observation_function(
+            self._apply_observation_function(
                 getattr(row, "meas_type"),
                 getattr(row, "meas_value"),
                 coord_diff,
@@ -74,7 +72,7 @@ class SpeedXYWBuilder:
         return X, Y, np.diag(W) if W is not None else None
 
     def _prepare_subset(self, subset):
-        stations = self._parent.dataset.stations
+        stations = self._dataset.stations
 
         idx_names = list(subset.index.names)
         subset = subset.reset_index()
@@ -95,16 +93,16 @@ class SpeedXYWBuilder:
         for col in columns:
             sigma_col = f"s{col}"
             if sigma_col in sigmas:
-                sigmas[col] = sigmas[sigma_col].fillna(self._parent.default_sigmas[sigma_col])
+                sigmas[col] = sigmas[sigma_col].fillna(self._default_sigmas[sigma_col])
                 sigmas.drop(columns=sigma_col, inplace=True)
             else:
-                sigmas[col] = self._parent.default_sigmas[sigma_col]
+                sigmas[col] = self._default_sigmas[sigma_col]
 
     def _melt_subset(self, subset, idx_names, type):
         if type not in ["meas", "sigma"]:
             raise ValueError("Type must be either 'meas' or 'sigma'.")
 
-        measurement_columns = self._parent.dataset.measurements.measurements_columns
+        measurement_columns = self._dataset.measurements.measurements_columns
 
         subset = subset.melt(
             id_vars=idx_names,
@@ -127,7 +125,7 @@ class SpeedXYWBuilder:
         return data
 
     def _calculate_coord_differences(self, data):
-        for col in self._parent.dataset.controls.coordinates_columns:
+        for col in self._dataset.controls.coordinates_columns:
             if col != "z":
                 data[f"d{col}"] = data[f"{col}_trg"] - data[f"{col}_stn"]
             else:
@@ -136,10 +134,8 @@ class SpeedXYWBuilder:
                 )
 
     def _merge_orientations(self, data):
+        data = data.merge(self._dataset.stations.orientation, how="left", on="stn_pk")
         data = data.merge(
-            self._parent.dataset.stations.orientation, how="left", on="stn_pk"
-        )
-        data = data.merge(
-            self._parent.orientations_index_in_x_matrix, how="left", on="stn_pk"
+            self._matrix_x_indexer.orientations_indices, how="left", on="stn_pk"
         )
         return data

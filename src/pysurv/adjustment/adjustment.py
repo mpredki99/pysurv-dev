@@ -7,26 +7,29 @@ class Adjustment:
         dataset,
         method="weighted",
         free_adjustment=None,
-        default_sigmas=None,
-        comutations_priority=None,
+        default_sigmas_index=None,
+        computations_priority=None,
     ):
         self._dataset = dataset
+        self._method = method
+        self._free_adjustment = free_adjustment
+        self._computations_priority = computations_priority
+
         self._lsq_matrices = LSQMatrices(
             self._dataset,
-            method=method,
-            free_adjustment=free_adjustment,
-            default_sigmas=default_sigmas,
-            comutations_priority=comutations_priority,
+            calculate_weights=self._method != "ordinary",
+            default_sigmas_index=default_sigmas_index,
+            computations_priority=computations_priority,
         )
 
     @property
     def method(self):
-        return self._lsq_matrices._method
+        return self._method
 
     @property
-    def comutations_priority(self):
-        from ._matrices_builder.matrices_builder_factory import strategies
+    def free_adjustment(self):
+        return self._free_adjustment
 
-        for strategy_name, strategy in strategies.items():
-            if isinstance(self._lsq_matrices._matrices_build_strategy, strategy):
-                return strategy_name
+    @property
+    def computations_priority(self):
+        self._computations_priority

@@ -1,20 +1,18 @@
-import numpy as np
-
-from ..matrices_builder import MatricesBuilder
-from .speed_xyw_builder import SpeedXYWBuilder
+from ..xyw_sw_build_strategy import XYWsWBuildStrategy
 from .speed_sw_builder import SpeedSWBuilder
+from .speed_xyw_builder import SpeedXYWBuilder
 
 
-class SpeedStrategy(MatricesBuilder):
-    def __init__(self, parent):
-        super().__init__(parent)
+class SpeedStrategy(XYWsWBuildStrategy):
+    def __init__(self, dataset, matrix_x_indexer, default_sigmas):
+        super().__init__()
+        self._xyw_builder = SpeedXYWBuilder(dataset, matrix_x_indexer, default_sigmas)
+        self._sw_builder = SpeedSWBuilder(dataset, matrix_x_indexer, default_sigmas)
 
-    def build_xyw(self, calculate_weights):
-        speed_xyw_builder = SpeedXYWBuilder(parent=self)
-        return speed_xyw_builder.build_xyw(calculate_weights)
-        
-    
-    def build_sw(self):
-        speed_sw_builder = SpeedSWBuilder(parent=self)
-        return speed_sw_builder.build_sw()
-        
+    @property
+    def xyw_builder(self):
+        return self._xyw_builder
+
+    @property
+    def sw_builder(self):
+        return self._sw_builder

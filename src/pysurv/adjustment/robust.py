@@ -77,7 +77,7 @@ def exponential(v, c=2.0, n=2.0):
 
 def sigma(v, sigma_sq, c=2.0, n=2.0):
     v = np.abs(v)
-    return np.exp(-(v ** n) / (sigma_sq * c))
+    return np.exp(-(v**n) / (sigma_sq * c))
 
 
 def error_func(v, c=1.414, n=2.0):
@@ -92,12 +92,12 @@ def cauchy(v, c=2.385, n=2.0):
 
 def t(v, k, c=1.0, n=2.0):
     v = np.abs(v)
-    return np.power(1 + v ** n / (c * k), -(k + 1) / 2)
+    return np.power(1 + v**n / (c * k), -(k + 1) / 2)
 
 
 def chain_bell(v, c=1.0, n=1.0):
     v = np.abs(v)
-    return np.divide(1, np.cosh(np.divide(v ** n * np.e, 2 * c)))
+    return np.divide(1, np.cosh(np.divide(v**n * np.e, 2 * c)))
 
 
 # TRIGONOMETRIC FUNCTIONS

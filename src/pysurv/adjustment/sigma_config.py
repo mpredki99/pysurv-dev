@@ -11,6 +11,8 @@ from pysurv.models import (
     validate_angle_unit,
 )
 
+from .constants import DEFAULT_SIGMAS
+
 __all__ = ["sigma_config"]
 
 
@@ -80,23 +82,7 @@ class SigmaRow:
 
 
 class SigmaConfig:
-    _default = dict(
-        stn_sh=0.01,
-        trg_sh=0.01,
-        ssd=0.01,
-        shd=0.01,
-        svd=0.01,
-        sdx=0.001,
-        sdy=0.001,
-        sdz=0.001,
-        sa=to_rad(0.0020),
-        shz=to_rad(0.0020),
-        svz=to_rad(0.0020),
-        svh=to_rad(0.0020),
-        sx=0.01,
-        sy=0.01,
-        sz=0.01,
-    )
+    _default = DEFAULT_SIGMAS
 
     def __init__(self, default_index="default") -> None:
         self._default_index = default_index
