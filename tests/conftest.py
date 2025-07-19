@@ -94,9 +94,7 @@ def valid_controls_data() -> pd.DataFrame:
 
 
 @pytest.fixture
-def valid_controls_file(
-    valid_controls_data: pd.DataFrame, temp_dir: str
-) -> str:
+def valid_controls_file(valid_controls_data: pd.DataFrame, temp_dir: str) -> str:
     """Writes valid controls data to a CSV file and returns its path."""
     file_path: str = os.path.join(temp_dir, "valid_controls.csv")
     valid_controls_data.to_csv(file_path, index=False)
@@ -163,9 +161,7 @@ def invalid_controls_data() -> pd.DataFrame:
 
 
 @pytest.fixture
-def invalid_controls_file(
-    invalid_controls_data: pd.DataFrame, temp_dir: str
-) -> str:
+def invalid_controls_file(invalid_controls_data: pd.DataFrame, temp_dir: str) -> str:
     """Writes invalid controls data to a CSV file and returns its path."""
     file_path: str = os.path.join(temp_dir, "invalid_controls.csv")
     invalid_controls_data.to_csv(file_path, index=False)
