@@ -1,3 +1,10 @@
+# Coding: UTF-8
+
+# Copyright (C) 2025 Michał Prędki
+# Licensed under the GNU General Public License v3.0.
+# Full text of the license can be found in the LICENSE and COPYING files in the repository.
+
+from typing import Generator, Any
 import os
 import tempfile
 
@@ -6,26 +13,30 @@ import pytest
 
 
 @pytest.fixture
-def temp_dir():
+def temp_dir() -> Generator[str, None, None]:
+    """Yields a temporary directory path."""
     with tempfile.TemporaryDirectory() as temp_dir:
         yield temp_dir
 
 
 @pytest.fixture
-def empty_data():
+def empty_data() -> Generator[pd.DataFrame, None, None]:
+    """Yields an empty DataFrame with id, stn_id, trg_id columns."""
     data = {"id": [], "stn_id": [], "trg_id": []}
     yield pd.DataFrame(data)
 
 
 @pytest.fixture
-def empty_file(empty_data, temp_dir):
-    file_path = os.path.join(temp_dir, "empty.csv")
+def empty_file(empty_data: pd.DataFrame, temp_dir: str) -> Generator[str, None, None]:
+    """Writes an empty DataFrame to a CSV file and yields its path."""
+    file_path: str = os.path.join(temp_dir, "empty.csv")
     empty_data.to_csv(file_path, index=False)
     yield file_path
 
 
 @pytest.fixture
-def valid_measurements_data():
+def valid_measurements_data() -> Generator[pd.DataFrame, None, None]:
+    """Yields a DataFrame with valid measurement data."""
     data = {
         "stn_id": ["C1", None, None, None, "C2"],
         "stn_h": [1.500, -1.576, None, None, None],
@@ -58,14 +69,18 @@ def valid_measurements_data():
 
 
 @pytest.fixture
-def valid_measurements_file(valid_measurements_data, temp_dir):
-    file_path = os.path.join(temp_dir, "valid_measurements.csv")
+def valid_measurements_file(
+    valid_measurements_data: pd.DataFrame, temp_dir: str
+) -> Generator[str, None, None]:
+    """Writes valid measurements data to a CSV file and yields its path."""
+    file_path: str = os.path.join(temp_dir, "valid_measurements.csv")
     valid_measurements_data.to_csv(file_path, index=False)
     yield file_path
 
 
 @pytest.fixture
-def valid_controls_data():
+def valid_controls_data() -> Generator[pd.DataFrame, None, None]:
+    """Yields a DataFrame with valid control data."""
     data = {
         "id": ["C1", "C2", "C3", "C4", "C5"],
         "x": [1000.00, 2000.00, 3000.00, 4000.00, 5000.00],
@@ -79,14 +94,18 @@ def valid_controls_data():
 
 
 @pytest.fixture
-def valid_controls_file(valid_controls_data, temp_dir):
-    file_path = os.path.join(temp_dir, "valid_controls.csv")
+def valid_controls_file(
+    valid_controls_data: pd.DataFrame, temp_dir: str
+) -> Generator[str, None, None]:
+    """Writes valid controls data to a CSV file and yields its path."""
+    file_path: str = os.path.join(temp_dir, "valid_controls.csv")
     valid_controls_data.to_csv(file_path, index=False)
     yield file_path
 
 
 @pytest.fixture
-def invalid_measurements_data():
+def invalid_measurements_data() -> Generator[pd.DataFrame, None, None]:
+    """Yields a DataFrame with invalid measurement data."""
     data = {
         "stn_id": ["C1", None, None, None, "C2"],
         "stn_h": [1.500, -1.576, "Invalid type", None, None],
@@ -119,15 +138,19 @@ def invalid_measurements_data():
 
 
 @pytest.fixture
-def invalid_measurements_file(invalid_measurements_data, temp_dir):
-    file_path = os.path.join(temp_dir, "invalid_measurements.csv")
+def invalid_measurements_file(
+    invalid_measurements_data: pd.DataFrame, temp_dir: str
+) -> Generator[str, None, None]:
+    """Writes invalid measurements data to a CSV file and yields its path."""
+    file_path: str = os.path.join(temp_dir, "invalid_measurements.csv")
     invalid_measurements_data.to_csv(file_path, index=False)
     yield file_path
 
 
 @pytest.fixture
-def invalid_controls_data():
-    data = {
+def invalid_controls_data() -> Generator[pd.DataFrame, None, None]:
+    """Yields a DataFrame with invalid control data."""
+    data: dict[str, list[Any]] = {
         "id": ["C1", "C2", "C3", "C4", "C5"],
         "x": ["Invalid type", 2000.00, 3000.00, 4000.00, 5000.00],
         "y": [1000.00, "Invalid type", 3000.00, 4000.00, 5000.00],
@@ -140,14 +163,18 @@ def invalid_controls_data():
 
 
 @pytest.fixture
-def invalid_controls_file(invalid_controls_data, temp_dir):
-    file_path = os.path.join(temp_dir, "invalid_controls.csv")
+def invalid_controls_file(
+    invalid_controls_data: pd.DataFrame, temp_dir: str
+) -> Generator[str, None, None]:
+    """Writes invalid controls data to a CSV file and yields its path."""
+    file_path: str = os.path.join(temp_dir, "invalid_controls.csv")
     invalid_controls_data.to_csv(file_path, index=False)
     yield file_path
 
 
 @pytest.fixture
-def measurements_data_columns_to_rename():
+def measurements_data_columns_to_rename() -> Generator[pd.DataFrame, None, None]:
+    """Yields a DataFrame with measurement columns to be renamed."""
     data = {
         "STN_ID": ["C1", None, None, None, "C2"],
         "STN_H": [1.500, -1.576, None, None, None],
@@ -180,14 +207,18 @@ def measurements_data_columns_to_rename():
 
 
 @pytest.fixture
-def measurements_file_columns_to_rename(measurements_data_columns_to_rename, temp_dir):
-    file_path = os.path.join(temp_dir, "measurements_to_rename.csv")
+def measurements_file_columns_to_rename(
+    measurements_data_columns_to_rename: pd.DataFrame, temp_dir: str
+) -> Generator[str, None, None]:
+    """Writes measurements data with columns to rename to a CSV file and yields its path."""
+    file_path: str = os.path.join(temp_dir, "measurements_to_rename.csv")
     measurements_data_columns_to_rename.to_csv(file_path, index=False)
     yield file_path
 
 
 @pytest.fixture
-def controls_data_column_to_rename_e_n_el():
+def controls_data_column_to_rename_e_n_el() -> Generator[pd.DataFrame, None, None]:
+    """Yields a DataFrame with E, N, EL columns for controls."""
     data = {
         "NR": ["C1", "C2", "C3", "C4", "C5"],
         "E": [1000.00, 2000.00, 3000.00, 4000.00, 5000.00],
@@ -202,16 +233,20 @@ def controls_data_column_to_rename_e_n_el():
 
 @pytest.fixture
 def controls_file_column_to_rename_e_n_el(
-    controls_data_column_to_rename_e_n_el, temp_dir
-):
-    file_path = os.path.join(temp_dir, "controls_e_n_el.csv")
+    controls_data_column_to_rename_e_n_el: pd.DataFrame, temp_dir: str
+) -> Generator[str, None, None]:
+    """Writes controls data with E, N, EL columns to a CSV file and yields its path."""
+    file_path: str = os.path.join(temp_dir, "controls_e_n_el.csv")
     controls_data_column_to_rename_e_n_el.to_csv(file_path, index=False)
     yield file_path
 
 
 @pytest.fixture
-def controls_data_column_to_rename_easting_northing_height():
-    data = {
+def controls_data_column_to_rename_easting_northing_height() -> (
+    Generator[pd.DataFrame, None, None]
+):
+    """Yields a DataFrame with EASTING, NORTHING, HEIGHT columns for controls."""
+    data: dict[str, list[Any]] = {
         "NR": ["C1", "C2", "C3", "C4", "C5"],
         "EASTING": [1000.00, 2000.00, 3000.00, 4000.00, 5000.00],
         "NORTHING": [1000.00, 2000.00, 3000.00, 4000.00, 5000.00],
@@ -225,9 +260,10 @@ def controls_data_column_to_rename_easting_northing_height():
 
 @pytest.fixture
 def controls_file_column_to_rename_easting_northing_height(
-    controls_data_column_to_rename_easting_northing_height, temp_dir
-):
-    file_path = os.path.join(temp_dir, "controls_e_n_el.csv")
+    controls_data_column_to_rename_easting_northing_height: pd.DataFrame, temp_dir: str
+) -> Generator[str, None, None]:
+    """Writes controls data with EASTING, NORTHING, HEIGHT columns to a CSV file and yields its path."""
+    file_path: str = os.path.join(temp_dir, "controls_e_n_el.csv")
     controls_data_column_to_rename_easting_northing_height.to_csv(
         file_path, index=False
     )
@@ -235,7 +271,8 @@ def controls_file_column_to_rename_easting_northing_height(
 
 
 @pytest.fixture
-def measurements_data_to_filter():
+def measurements_data_to_filter() -> Generator[pd.DataFrame, None, None]:
+    """Yields a measurement DataFrame with extra columns."""
     data = {
         "stn_id": ["C1", None, None, None, "C2"],
         "stn_h": [1.500, -1.576, None, None, None],
@@ -270,14 +307,18 @@ def measurements_data_to_filter():
 
 
 @pytest.fixture
-def measurements_file_to_filter(measurements_data_to_filter, temp_dir):
-    file_path = os.path.join(temp_dir, "measurements_to_filter.csv")
+def measurements_file_to_filter(
+    measurements_data_to_filter: pd.DataFrame, temp_dir: str
+) -> Generator[str, None, None]:
+    """Writes measurements data with extra columns to a CSV file and yields its path."""
+    file_path: str = os.path.join(temp_dir, "measurements_to_filter.csv")
     measurements_data_to_filter.to_csv(file_path, index=False)
     yield file_path
 
 
 @pytest.fixture
-def controls_data_to_filter():
+def controls_data_to_filter() -> Generator[pd.DataFrame, None, None]:
+    """Yields a controls DataFrame with extra columns."""
     data = {
         "id": ["C1", "C2", "C3", "C4", "C5"],
         "x": [1000.00, 2000.00, 3000.00, 4000.00, 5000.00],
@@ -293,14 +334,20 @@ def controls_data_to_filter():
 
 
 @pytest.fixture
-def controls_file_to_filter(controls_data_to_filter, temp_dir):
-    file_path = os.path.join(temp_dir, "controls_to_filter.csv")
+def controls_file_to_filter(
+    controls_data_to_filter: pd.DataFrame, temp_dir: str
+) -> Generator[str, None, None]:
+    """Writes controls data with extra columns to a CSV file and yields its path."""
+    file_path: str = os.path.join(temp_dir, "controls_to_filter.csv")
     controls_data_to_filter.to_csv(file_path, index=False)
     yield file_path
 
 
 @pytest.fixture
-def measurements_data_missing_mandatory_columns():
+def measurements_data_missing_mandatory_columns() -> (
+    Generator[pd.DataFrame, None, None]
+):
+    """Yields DataFrame with missing mandatory measurement columns."""
     data = {
         "stn_h": [1.500, -1.576, None, None, None],
         "stn_sh": [0.01, None, 0.05, None, None],
@@ -332,16 +379,18 @@ def measurements_data_missing_mandatory_columns():
 
 @pytest.fixture
 def measurements_file_missing_mandatory_columns(
-    measurements_data_missing_mandatory_columns, temp_dir
-):
-    file_path = os.path.join(temp_dir, "measurements_missing_columns.csv")
+    measurements_data_missing_mandatory_columns: pd.DataFrame, temp_dir: str
+) -> Generator[str, None, None]:
+    """Writes measurements data with missing mandatory columns to a CSV file and yields its path."""
+    file_path: str = os.path.join(temp_dir, "measurements_missing_columns.csv")
     measurements_data_missing_mandatory_columns.to_csv(file_path, index=False)
     yield file_path
 
 
 @pytest.fixture
-def controls_data_missing_mandatory_columns():
-    data = {
+def controls_data_missing_mandatory_columns() -> Generator[pd.DataFrame, None, None]:
+    """Yields DataFrame with missing mandatory control columns."""
+    data: dict[str, list[Any]] = {
         "x": [1000.00, 2000.00, 3000.00, 4000.00, 5000.00],
         "y": [1000.00, 2000.00, 3000.00, 4000.00, 5000.00],
         "z": [100.00, 100.10, 100.20, None, 100.40],
@@ -354,8 +403,9 @@ def controls_data_missing_mandatory_columns():
 
 @pytest.fixture
 def controls_file_missing_mandatory_columns(
-    controls_data_missing_mandatory_columns, temp_dir
-):
-    file_path = os.path.join(temp_dir, "controls_missing_columns.csv")
+    controls_data_missing_mandatory_columns: pd.DataFrame, temp_dir: str
+) -> Generator[str, None, None]:
+    """Writes controls data with missing mandatory columns to a CSV file and yields its path."""
+    file_path: str = os.path.join(temp_dir, "controls_missing_columns.csv")
     controls_data_missing_mandatory_columns.to_csv(file_path, index=False)
     yield file_path
