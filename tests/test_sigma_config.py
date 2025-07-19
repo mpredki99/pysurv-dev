@@ -4,10 +4,11 @@
 # Licensed under the GNU General Public License v3.0.
 # Full text of the license can be found in the LICENSE and COPYING files in the repository.
 
-import pandas as pd
-import numpy as np
-import pytest
 from typing import List
+
+import numpy as np
+import pandas as pd
+import pytest
 
 from pysurv import config
 from pysurv.adjustment import sigma_config

@@ -4,9 +4,9 @@
 # Licensed under the GNU General Public License v3.0.
 # Full text of the license can be found in the LICENSE and COPYING files in the repository.
 
-from typing import Generator, Any
 import os
 import tempfile
+from typing import Any, Generator
 
 import pandas as pd
 import pytest

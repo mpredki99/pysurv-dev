@@ -4,9 +4,10 @@
 # Licensed under the GNU General Public License v3.0.
 # Full text of the license can be found in the LICENSE and COPYING files in the repository.
 
+from typing import List, Tuple
+
 import pandas as pd
 import pytest
-from typing import List, Tuple
 
 from pysurv.exceptions._exceptions import (
     EmptyDatasetError,
