@@ -13,6 +13,7 @@ import pytest
 from pysurv import config
 from pysurv.adjustment import sigma_config
 from pysurv.adjustment._constants import DEFAULT_SIGMAS
+from pysurv.warnings import DefaultIndexWarning
 
 
 @pytest.fixture
@@ -49,6 +50,12 @@ def test_sigma_config_string(capsys: pytest.CaptureFixture) -> None:
     print(sigma_config)
     captured = capsys.readouterr()
     assert "SIGMA CONFIG" in captured.out
+    
+def test_sigma_config_row_string(capsys: pytest.CaptureFixture) -> None:
+    """Test string representation of sigma config row contains row name."""
+    print(sigma_config.default)
+    captured = capsys.readouterr()
+    assert "default" in captured.out
 
 
 def test_sigma_config_index_type() -> None:
@@ -95,9 +102,27 @@ def test_new_default_index_delete() -> None:
     assert sigma_config.default_index == "default"
 
 
-def test_get_attr_get_item() -> None:
+def test_delete_default_index_attr() -> None:
+    """Test deleting a default index property raise warning and set default index to 'default'."""
+    sigma_config.append("new_default_index_3")
+    sigma_config.default_index = "new_default_index_3"
+    assert sigma_config.default_index == "new_default_index_3"
+
+    with pytest.warns(DefaultIndexWarning):
+        del sigma_config.default_index
+
+    assert sigma_config.default_index == "default"
+
+
+def test_getattr_getitem() -> None:
     """Test dot notation and slice notation returns refernece for the same object."""
     assert sigma_config["default"] is sigma_config.default
+
+
+def test_getitem_invalid() -> None:
+    """Test slice invalid value raises attribute error."""
+    with pytest.raises(AttributeError):
+        sigma_config["invalid_name"]
 
 
 def test_sigma_cofig_columns(sigma_columns: List[str]) -> None:
@@ -213,7 +238,7 @@ def test_append_without_name() -> None:
     n_index_after = len(sigma_config.index)
 
     assert n_index_after == n_index_before + 1
-    assert f"index_{n_index_before}" in sigma_config.index
+    assert f"index_{n_index_before - 1}" in sigma_config.index
 
 
 def test_append_duplicate_name() -> None:
@@ -225,14 +250,15 @@ def test_append_duplicate_name() -> None:
 
 def test_append_invalid_values() -> None:
     """Test appending with invalid values raises ValueError."""
-    validated_row = {
+    invalid_row = {
         "trg_sh": -1,
         "shd": "Invalid_type",
         "sdy": -10,
         "sy": -2,
+        "invalid_key": 2
     }
     with pytest.raises(ValueError):
-        sigma_config.append("validated_row", angle_unit="rad", **validated_row)
+        sigma_config.append("invalid_row", angle_unit="rad", **invalid_row)
 
 
 def test_display(sigma_columns: List[str]) -> None:
@@ -428,3 +454,8 @@ def test_get() -> None:
         # Do conversion for angles
         sigma_config.default.set("svz", 50, angle_unit=angle_unit)
         assert sigma_config.default.get("svz", angle_unit=angle_unit) == 50
+
+def test_get_invalid_key() -> None:
+    """Test get() raise value error on calling invalid field."""
+    with pytest.raises(AttributeError):
+        sigma_config.default.get("Invalid_key")

@@ -76,7 +76,7 @@ class SigmaConfig:
     def _validate_name(self, name: str | None) -> str:
         """Validate a name for a sigma row."""
         if name is None:
-            return f"index_{len(self.index)}"
+            return f"index_{len(self.index) - 1}"
         elif name.strip().isidentifier():
             return name.strip()
         raise ValueError("Attribute name is not valid identifier.")
@@ -128,6 +128,8 @@ class SigmaConfig:
         if name in self.index:
             raise IndexError(f"Given index name already exist: {name}")
         
+        data["name"] = name
+        
         self.__setattr__(name, SigmaRow(angle_unit=angle_unit, **data))
 
     def display(self, angle_unit: str | None = None) -> pd.DataFrame:
@@ -156,9 +158,11 @@ class SigmaRow:
 
     def __init__(self, angle_unit: str | None = "rad", **kwargs) -> None:
         data = {}
+        name = kwargs.pop("name", "default")
         for key, value in kwargs.items():
             data[key] = self._validate_attr(key, value, angle_unit=angle_unit)
-        self._data = pd.Series(data)
+
+        self._data = pd.Series(data, name=name)
 
     def __setattr__(self, name: str, value: Any) -> None:
         """Set _data (row storing attribute) or set row sigma values with validation."""
