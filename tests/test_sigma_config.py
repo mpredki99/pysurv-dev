@@ -50,7 +50,8 @@ def test_sigma_config_string(capsys: pytest.CaptureFixture) -> None:
     print(sigma_config)
     captured = capsys.readouterr()
     assert "SIGMA CONFIG" in captured.out
-    
+
+
 def test_sigma_config_row_string(capsys: pytest.CaptureFixture) -> None:
     """Test string representation of sigma config row contains row name."""
     print(sigma_config.default)
@@ -255,7 +256,7 @@ def test_append_invalid_values() -> None:
         "shd": "Invalid_type",
         "sdy": -10,
         "sy": -2,
-        "invalid_key": 2
+        "invalid_key": 2,
     }
     with pytest.raises(ValueError):
         sigma_config.append("invalid_row", angle_unit="rad", **invalid_row)
@@ -454,6 +455,7 @@ def test_get() -> None:
         # Do conversion for angles
         sigma_config.default.set("svz", 50, angle_unit=angle_unit)
         assert sigma_config.default.get("svz", angle_unit=angle_unit) == 50
+
 
 def test_get_invalid_key() -> None:
     """Test get() raise value error on calling invalid field."""
