@@ -5,7 +5,7 @@
 # Full text of the license can be found in the LICENSE and COPYING files in the repository.
 
 """
-This package provides a modular and extensible framework for constructing the various matrices
+This module provides a modular and extensible framework for constructing the various matrices
 required in adjustment computations, such as those used in least squares adjustment of
 surveying cotrol network.
 
