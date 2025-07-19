@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from pysurv.exceptions.exceptions import (
+from pysurv.exceptions._exceptions import (
     EmptyDatasetError,
     InvalidDataError,
     MissingMandatoryColumnsError,
@@ -276,7 +276,8 @@ class TestCSVReader:
         reader = CSVReader(
             invalid_measurements_file, valid_controls_file, validation_mode="skip"
         )
-        reader.read_measurements()
+        with pytest.warns():
+            reader.read_measurements()
 
         trg_h = reader.measurements.columns.get_loc("trg_h")
         trg_sh = reader.measurements.columns.get_loc("trg_sh")
@@ -364,7 +365,7 @@ class TestCSVReader:
 
         assert not reader.controls.empty
 
-        assert reader.controls.iloc[0, 1] == "Invalid type"
+        assert reader.controls.iloc[0, x] == "Invalid type"
         assert reader.controls.iloc[1, y] == "Invalid type"
         assert reader.controls.iloc[2, z] == "Invalid type"
         assert reader.controls.iloc[0, sx] == "Invalid type"
@@ -380,7 +381,8 @@ class TestCSVReader:
         reader = CSVReader(
             valid_measurements_file, invalid_controls_file, validation_mode="skip"
         )
-        reader.read_controls()
+        with pytest.warns():
+            reader.read_controls()
 
         x = reader.controls.columns.get_loc("x")
         y = reader.controls.columns.get_loc("y")
@@ -391,7 +393,7 @@ class TestCSVReader:
 
         assert not reader.controls.empty
 
-        assert np.isnan(reader.controls.iloc[0, 1])
+        assert np.isnan(reader.controls.iloc[0, x])
         assert np.isnan(reader.controls.iloc[1, y])
         assert np.isnan(reader.controls.iloc[2, z])
         assert np.isnan(reader.controls.iloc[0, sx])

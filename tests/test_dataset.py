@@ -1,6 +1,7 @@
 import pytest
 
-from pysurv.data import Controls, Dataset, Measurements, Stations
+from pysurv import Dataset
+from pysurv.data import Controls, Measurements, Stations
 
 
 def test_dataset_instance(valid_measurements_file, valid_controls_file):

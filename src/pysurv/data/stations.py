@@ -1,55 +1,87 @@
+# Coding: UTF-8
+
+# Copyright (C) 2025 Michał Prędki
+# Licensed under the GNU General Public License v3.0.
+# Full text of the license can be found in the LICENSE and COPYING files in the repository.
+
+from typing import Iterable
+
 import numpy as np
 import pandas as pd
 
-from pysurv.basic import azimuth, from_rad
-from pysurv.config import config
-from pysurv.models import validate_angle_unit
+from pysurv.basic.basic import azimuth, from_rad
+
+from .angular_dataset import AngularDataset
+from .controls import Controls
 
 
-class Stations(pd.DataFrame):
-    def __init__(self, data, *args, **kwargs):
-        super().__init__(data, *args, **kwargs)
+class Stations(AngularDataset):
+    """
+    Measurements dataset class for storing and managing surveying station data.
 
-        if {"stn_pk"}.issubset(self.columns):
+    Inherits from
+    -------------
+    pandas.DataFrame
+    """
+
+    def __init__(
+        self,
+        data: Iterable | dict | pd.DataFrame,
+        angle_unit: str | None = None,
+        **kwargs,
+    ) -> None:
+        _first_init = kwargs.pop("_first_init", True)
+        super().__init__(data, **kwargs)
+
+        if _first_init:
             self.set_index("stn_pk", inplace=True)
 
     @property
     def _constructor(self):
-        return Stations
+        """Return class constructor with hidden _first_init kwarg."""
 
-    def append_oreintation_constant(self, data, controls):
-        data = data.reset_index()
-        data.insert(1, "stn_id", data.stn_pk.map(self.stn_id))
+        def _c(*args, **kwargs):
+            kwargs["_first_init"] = False
+            return Stations(*args, **kwargs)
 
-        cols = ["stn", "trg"]
-        for point in cols:
-            data = data.merge(
+        return _c
+
+    def append_oreintation_constant(
+        self, hz_data: pd.Series, controls: Controls
+    ) -> None:
+        """Append orientation constant to the dataset."""
+        hz_data = hz_data.reset_index()
+        hz_data.insert(1, "stn_id", hz_data.stn_pk.map(self.stn_id))
+
+        end_points = ["stn", "trg"]
+        for point in end_points:
+            hz_data = hz_data.merge(
                 controls[["x", "y"]],
                 how="left",
                 left_on=f"{point}_id",
                 right_on="id",
-                suffixes=[f"_{col}" for col in cols],
+                suffixes=[f"_{pt}" for pt in end_points],
             )
-        data = data.set_index("stn_pk")
+        hz_data = hz_data.set_index("stn_pk")
 
         self["orientation"] = (
-            azimuth(data["x_stn"], data["y_stn"], data["x_trg"], data["y_trg"])
-            - data["hz"]
+            azimuth(
+                hz_data["x_stn"], hz_data["y_stn"], hz_data["x_trg"], hz_data["y_trg"]
+            )
+            - hz_data["hz"]
         )
 
-    def display(self, angle_unit=None):
-        col = "orientation"
-        data = self.copy()
+    def display(self, angle_unit: str | None = None):
+        """Display the stations dataset with orientation constant in the specified angle unit."""
+        orientation = "orientation"
+        frame = self.copy()
+        angle_unit = angle_unit or self._angle_unit
 
-        if col not in data.columns:
-            return data
+        if orientation not in frame.columns or angle_unit == "rad":
+            return frame
 
-        angle_unit = (
-            config.angle_unit if angle_unit is None else validate_angle_unit(angle_unit)
+        frame[orientation] = from_rad(
+            np.mod(frame[orientation], 2 * np.pi), unit=angle_unit
         )
-        data[col] = from_rad(np.mod(data[col], 2 * np.pi), unit=angle_unit)
 
-        return data
-
-    def to_dataframe(self):
-        return pd.DataFrame(self)
+        return frame

@@ -1,3 +1,9 @@
+# Coding: UTF-8
+
+# Copyright (C) 2025 Michał Prędki
+# Licensed under the GNU General Public License v3.0.
+# Full text of the license can be found in the LICENSE and COPYING files in the repository.
+
 import os
 
 import numpy as np
@@ -7,32 +13,41 @@ from .base_reader import BaseReader
 
 
 class CSVReader(BaseReader):
+    """
+    Concrete implementation of the BaseReader abstract class for reading datasets from CSV files.
+
+    This class provides methods to read measurements, controls, and stations data from CSV files,
+    filter and validate their contents.
+    """
 
     def __init__(
         self,
-        measurements_file_path,
-        controls_file_path,
-        validation_mode="raise",
-        delimiter=None,
-        decimal=".",
+        measurements_file_path: str | os.PathLike,
+        controls_file_path: str | os.PathLike,
+        validation_mode: str | None = "raise",
+        delimiter: str | None = None,
+        decimal: str = ".",
     ):
         super().__init__(validation_mode)
 
-        self.validate_file_path(measurements_file_path, "Measurements")
-        self._measurements_file_path = measurements_file_path
-
-        self.validate_file_path(controls_file_path, "Controls")
-        self._controls_file_path = controls_file_path
+        self._measurements_file_path = self._validate_file_path(
+            measurements_file_path, "Measurements"
+        )
+        self._controls_file_path = self._validate_file_path(
+            controls_file_path, "Controls"
+        )
 
         self.delimiter = delimiter
         self.decimal = decimal
 
-    def validate_file_path(self, file_path, dataset_name):
-        if not os.path.exists(file_path):
+    def _validate_file_path(self, file_path, dataset_name):
+        """Validate provided path to check if file exists."""
+        if not os.path.isfile(file_path):
             raise FileNotFoundError(f"{dataset_name} file not found: {file_path}")
+        return file_path
 
-    # MEASUREMENTS DATASET METHODS
     def read_measurements(self):
+        """Read measurements data from CSV file."""
         self._measurements = pd.read_csv(
             self._measurements_file_path, delimiter=self.delimiter, decimal=self.decimal
         )
@@ -41,8 +56,9 @@ class CSVReader(BaseReader):
         self._validate_mandatory_columns("Measurements")
         self._measurements = self._filter_columns("Measurements")
 
-        self.read_stations()
-        self._insert_stn_pk()
+        if self._stations is None:
+            self.read_stations()
+            self._insert_stn_pk()
 
         if self._validation_mode in ["raise", "skip"]:
             self._validate_data("Measurements")
@@ -50,6 +66,7 @@ class CSVReader(BaseReader):
         self._to_float("Measurements")
 
     def _insert_stn_pk(self):
+        """Insert station primary key (stn_pk) into the measurements dataset."""
         self._measurements.insert(0, "meas_iloc", np.arange(len(self._measurements)))
         self._measurements = self._measurements.merge(
             self._stations,
@@ -76,8 +93,8 @@ class CSVReader(BaseReader):
         stn_pk = self._measurements.pop("stn_pk")
         self._measurements.insert(0, "stn_pk", stn_pk.astype(int))
 
-    # CONTROLS DATASET METHODS
     def read_controls(self):
+        """Read controls data from CSV file."""
         self._controls = pd.read_csv(
             self._controls_file_path, delimiter=self.delimiter, decimal=self.decimal
         )
@@ -92,6 +109,7 @@ class CSVReader(BaseReader):
         self._to_float("Controls")
 
     def _standardize_control_columns_names(self):
+        """Standardize column names in the controls dataset."""
         self._controls.rename(
             columns={
                 "nr": "id",
@@ -111,8 +129,11 @@ class CSVReader(BaseReader):
             inplace=True,
         )
 
-    # STATIONS DATASET METHODS
     def read_stations(self):
+        """Extract stations data from measurements dataset."""
+        if self._measurements is None:
+            return self.read_measurements()
+
         stn_columns = self._measurements.columns[
             self._measurements.columns.isin(["stn_id", "stn_h", "stn_sh"])
         ]
@@ -131,5 +152,6 @@ class CSVReader(BaseReader):
         self._to_float("Stations")
 
     def _standardize_stations_columns_names(self):
+        """Standardize column names in the stations dataset."""
         self._stations.rename_axis("stn_pk", inplace=True)
         self._stations.reset_index(inplace=True)

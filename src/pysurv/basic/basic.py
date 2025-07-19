@@ -1,11 +1,17 @@
+# Coding: UTF-8
+
+# Copyright (C) 2025 Michał Prędki
+# Licensed under the GNU General Public License v3.0.
+# Full text of the license can be found in the LICENSE and COPYING files in the repository.
+
 import numpy as np
 
-from pysurv.config import config
-from pysurv.models import validate_angle_unit
+from pysurv.validators._validators import validate_angle_unit
 
 
 def to_rad(angle: float, unit: str | None = None) -> float:
-    unit = config.angle_unit if unit is None else validate_angle_unit(unit)
+    """Convert angle from degrees or gradinas to radians."""
+    unit = validate_angle_unit(unit)
 
     if unit in ["grad", "gon"]:
         return angle * np.pi / 200
@@ -16,7 +22,8 @@ def to_rad(angle: float, unit: str | None = None) -> float:
 
 
 def from_rad(angle: float, unit: str | None = None) -> float:
-    unit = config.angle_unit if unit is None else validate_angle_unit(unit)
+    """Convert angle from radians to degrees or gradinas."""
+    unit = validate_angle_unit(unit)
 
     if unit in ["grad", "gon"]:
         return angle * 200 / np.pi
@@ -26,7 +33,8 @@ def from_rad(angle: float, unit: str | None = None) -> float:
         return angle
 
 
-def azimuth(x_first, y_first, x_second, y_second):
+def azimuth(x_first: float, y_first: float, x_second: float, y_second: float) -> float:
+    """Calculate the azimuth in radians from coordinates."""
     dx = x_second - x_first
     dy = y_second - y_first
 

@@ -1,41 +1,24 @@
+# Coding: UTF-8
+
+# Copyright (C) 2025 Michał Prędki
+# Licensed under the GNU General Public License v3.0.
+# Full text of the license can be found in the LICENSE and COPYING files in the repository.
+
 from typing import ClassVar
 
-import pandas as pd
 from pydantic import BaseModel, Field, field_validator
 
-from pysurv.adjustment.robust import __all__ as robust_methods
-
-
-def validate_method(method):
-    valid_methods = ["ordinary", "weighted"]
-    valid_methods.extend(robust_methods)
-    if method not in valid_methods:
-        raise ValueError(f"Invalid weighting method. Valid methods: {valid_methods}")
-    return method
-
-
-def validate_angle_unit(v):
-    if v not in ["rad", "grad", "gon", "deg"]:
-        raise ValueError("Angle unit must be either 'rad', 'grad', 'gon', 'deg'.")
-    return v
-
-
-def _validator(v, enable_minus_one=False, error_message="Sigma values must be >= 0."):
-    is_empty = pd.isna(v)
-    is_negative = not v >= 0
-
-    error_condition = not is_empty and is_negative
-
-    if enable_minus_one:
-        error_condition = error_condition and not v == -1
-        error_message = "Control point sigma values must be >= 0 or -1."
-
-    if error_condition:
-        raise ValueError(f"{error_message} Got {v}.")
-    return v
+from ._validators import sigma_validator
 
 
 class MeasurementModel(BaseModel):
+    """
+    Model representing a measurement record in a measurements dataset.
+
+    This model is used to validate information about a single measurement row,
+    including station and target identifiers, measured values (distances, angles, coordinate differences),
+    and their associated standard deviations.
+    """
     stn_pk: int
     trg_id: str
     trg_h: float | None = None
@@ -66,12 +49,14 @@ class MeasurementModel(BaseModel):
     @field_validator(
         "trg_sh", "ssd", "shd", "svd", "sdx", "sdy", "sdz", "sa", "shz", "svz", "svh"
     )
-    def check_sigma(cls, v):
-        return _validator(v)
+    def validate_sigma(cls, v):
+        """Validate sigma fields for non-negative values."""
+        return sigma_validator(v)
 
     @field_validator("sd", "hd")
-    def check_distance(cls, v):
-        return _validator(v, error_message="Distance values must be >= 0.")
+    def validate_distance(cls, v):
+        """Validate that distance values are non-negative."""
+        return sigma_validator(v, error_message="Distance values must be >= 0.")
 
     COLUMN_LABELS: ClassVar[dict] = {
         "station_key": ["stn_pk"],
@@ -86,6 +71,12 @@ class MeasurementModel(BaseModel):
 
 
 class ControlPointModel(BaseModel):
+    """
+    Model representing a control point in controls dataset.
+
+    This model is used to validate information about a control point,
+    including its identifier, coordinates, and associated standard deviations.
+    """
     id: str
     x: float | None = None
     y: float | None = None
@@ -95,8 +86,9 @@ class ControlPointModel(BaseModel):
     sz: float | None = Field(default=None, description="Standard deviation in z.")
 
     @field_validator("sx", "sy", "sz")
-    def check_sigma(cls, v):
-        _validator(v, enable_minus_one=True)
+    def validate_sigma(cls, v):
+        """Validate sigma fields for non-negative values enabling special value -1."""
+        sigma_validator(v, enable_minus_one=True)
 
     COLUMN_LABELS: ClassVar[dict] = {
         "point_label": ["id"],
@@ -106,6 +98,13 @@ class ControlPointModel(BaseModel):
 
 
 class StationModel(BaseModel):
+    """
+    Model representing a station record in stations dataset.
+
+    This model is used to validate information about a station,
+    including its primary key, identifier, height, standard deviation of height,
+    and orientation.
+    """
     stn_pk: int
     stn_id: str
     stn_h: float | None = None
@@ -121,5 +120,6 @@ class StationModel(BaseModel):
     }
 
     @field_validator("stn_sh")
-    def check_sigma(cls, v):
-        return _validator(v)
+    def validate_sigma(cls, v):
+        """Validate stn_sh field for non-negative values."""
+        return sigma_validator(v)
