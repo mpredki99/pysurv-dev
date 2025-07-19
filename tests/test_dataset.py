@@ -28,30 +28,13 @@ def test_dataset_measurements_view_columns(
     valid_measurements_file, valid_controls_file
 ):
     dataset = Dataset.from_csv(valid_measurements_file, valid_controls_file)
-    assert "stn_pk" in dataset.measurements_view.index.names
-    assert "stn_id" in dataset.measurements_view.index.names
-    assert "stn_h" in dataset.measurements_view.index.names
-    assert "stn_sh" in dataset.measurements_view.index.names
-    assert "trg_id" in dataset.measurements_view.index.names
-    assert "trg_h" in dataset.measurements_view.index.names
-    assert "trg_sh" in dataset.measurements_view.index.names
-    assert "sd" in dataset.measurements_view.columns
-    assert "ssd" in dataset.measurements_view.columns
-    assert "hd" in dataset.measurements_view.columns
-    assert "shd" in dataset.measurements_view.columns
-    assert "vd" in dataset.measurements_view.columns
-    assert "svd" in dataset.measurements_view.columns
-    assert "dx" in dataset.measurements_view.columns
-    assert "sdx" in dataset.measurements_view.columns
-    assert "dy" in dataset.measurements_view.columns
-    assert "sdy" in dataset.measurements_view.columns
-    assert "dz" in dataset.measurements_view.columns
-    assert "sdz" in dataset.measurements_view.columns
-    assert "a" in dataset.measurements_view.columns
-    assert "sa" in dataset.measurements_view.columns
-    assert "hz" in dataset.measurements_view.columns
-    assert "shz" in dataset.measurements_view.columns
-    assert "vz" in dataset.measurements_view.columns
-    assert "svz" in dataset.measurements_view.columns
-    assert "vh" in dataset.measurements_view.columns
-    assert "svh" in dataset.measurements_view.columns
+    view_index = ["stn_pk", "stn_id", "stn_h", "stn_sh", "trg_id", "trg_h", "trg_sh"]
+    view_columns = ["sd", "ssd", "hd", "shd", "vd", "svd", 
+                    "dx", "sdx","dy", "sdy", "dz", "sdz", 
+                    "a", "sa", "hz", "shz", "vz", "svz", "vh", "svh"]
+    
+    for idx in view_index:
+        assert idx in dataset.measurements_view.index.names
+        
+    for col in view_columns:
+        assert col in dataset.measurements_view.columns
