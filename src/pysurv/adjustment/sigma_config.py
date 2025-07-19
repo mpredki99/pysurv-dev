@@ -85,6 +85,11 @@ class SigmaConfig:
     def index(self) -> pd.Index:
         """Returns the name index of all sigma rows."""
         return pd.Index(self.__dict__.keys())
+    
+    @property
+    def columns(self) -> pd.Index:
+        """Returns sigma columns names as pandas index."""
+        return self._dataframe.columns
 
     @property
     def default_index(self) -> str:

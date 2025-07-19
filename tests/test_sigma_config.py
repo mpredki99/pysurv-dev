@@ -103,13 +103,13 @@ def test_get_attr_get_item() -> None:
 def test_sigma_cofig_columns(sigma_columns: List[str]) -> None:
     """Test that all sigma columns are present in the dataframe."""
     for col in sigma_columns:
-        assert col in sigma_config._dataframe.columns
+        assert col in sigma_config.columns
 
 
 def test_sigma_cofig_columns_type(sigma_columns: List[str]) -> None:
     """Test that all sigma columns are of type float."""
     for col in sigma_columns:
-        assert sigma_config._dataframe[col].dtype == float
+        assert sigma_config[col].dtype == float
 
 
 def test_append_invalid_name() -> None:
