@@ -13,7 +13,7 @@ from pysurv.basic.basic import from_rad, to_rad
 from pysurv.validators._models import (
     ControlPointModel,
     MeasurementModel,
-    sigma_validator,
+    validate_sigma,
 )
 from pysurv.warnings._warnings import DefaultIndexWarning
 
@@ -195,18 +195,18 @@ class SigmaRow:
 
     def _validate_distance_sigma(self, value: float) -> float:
         """Validate distance sigma value."""
-        return sigma_validator(value)
+        return validate_sigma(value)
 
     def _validate_angle_sigma(self, value: float, angle_unit: str | None = "rad"):
         """Validate angle sigma value."""
-        value = sigma_validator(value)
+        value = validate_sigma(value)
         if angle_unit == "rad":
             return value
         return to_rad(value, unit=angle_unit)
 
     def _validate_control_point_sigma(self, value: float):
         """Validate control point sigma value."""
-        return sigma_validator(value, enable_minus_one=True)
+        return validate_sigma(value, enable_minus_one=True)
 
     def set(self, name: str, value: float, angle_unit: str | None = "rad"):
         """Set sigma value by name with angle unit specified."""

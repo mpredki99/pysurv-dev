@@ -9,7 +9,7 @@ import pandas as pd
 from pysurv.exceptions import InvalidAngleUnitError
 
 
-def sigma_validator(
+def validate_sigma(
     v: float, 
     enable_minus_one: bool = False, 
     error_message: str = "Sigma values must be >= 0."

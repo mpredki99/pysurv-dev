@@ -8,7 +8,7 @@ from typing import ClassVar
 
 from pydantic import BaseModel, Field, field_validator
 
-from ._validators import sigma_validator
+from ._validators import validate_sigma
 
 
 class MeasurementModel(BaseModel):
@@ -51,12 +51,12 @@ class MeasurementModel(BaseModel):
     )
     def validate_sigma(cls, v):
         """Validate sigma fields for non-negative values."""
-        return sigma_validator(v)
+        return validate_sigma(v)
 
     @field_validator("sd", "hd")
     def validate_distance(cls, v):
         """Validate that distance values are non-negative."""
-        return sigma_validator(v, error_message="Distance values must be >= 0.")
+        return validate_sigma(v, error_message="Distance values must be >= 0.")
 
     COLUMN_LABELS: ClassVar[dict] = {
         "station_key": ["stn_pk"],
@@ -88,7 +88,7 @@ class ControlPointModel(BaseModel):
     @field_validator("sx", "sy", "sz")
     def validate_sigma(cls, v):
         """Validate sigma fields for non-negative values enabling special value -1."""
-        sigma_validator(v, enable_minus_one=True)
+        validate_sigma(v, enable_minus_one=True)
 
     COLUMN_LABELS: ClassVar[dict] = {
         "point_label": ["id"],
@@ -122,4 +122,4 @@ class StationModel(BaseModel):
     @field_validator("stn_sh")
     def validate_sigma(cls, v):
         """Validate stn_sh field for non-negative values."""
-        return sigma_validator(v)
+        return validate_sigma(v)
