@@ -146,7 +146,7 @@ class LSQMatrices:
         if self._hz_first_occurence is None:
             self._set_hz_first_occurence()
 
-        self._dataset.stations.append_oreintation_constant(
+        self._dataset.stations.append_orientation_constant(
             self._hz_first_occurence, self.dataset.controls
         )
 

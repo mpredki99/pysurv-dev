@@ -46,7 +46,7 @@ class Stations(AngularDataset):
 
         return _c
 
-    def append_oreintation_constant(
+    def append_orientation_constant(
         self, hz_data: pd.Series, controls: Controls
     ) -> None:
         """Append orientation constant to the dataset."""
