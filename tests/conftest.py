@@ -11,6 +11,30 @@ from typing import Any, Generator
 import pandas as pd
 import pytest
 
+from pysurv import config
+from pysurv.adjustment import sigma_config
+
+
+@pytest.fixture(autouse=True)
+def sigma_config_test():
+    """Reset sigma_config to its default state after each test."""
+    default_index = sigma_config.default_index
+    yield
+    sigma_config.default_index = default_index
+    for idx in sigma_config.index:
+        if idx == "default":
+            continue
+        delattr(sigma_config, idx)
+    sigma_config.restore_default()
+
+
+@pytest.fixture(autouse=True)
+def config_test():
+    """Restore config to its default state after each test."""
+    original_angle_unit = config.angle_unit
+    yield
+    config.angle_unit = original_angle_unit
+
 
 @pytest.fixture
 def temp_dir() -> Generator[str, None, None]:
