@@ -45,7 +45,7 @@ class SigmaConfig:
             return self._dataframe[name]
         else:
             raise AttributeError(f"Sigma config has not attribute: {name}")
-    
+
     def __delattr__(self, name: str) -> None:
         """Delete a sigma row by name, with protection for 'default' index."""
         if name == "default":
@@ -84,8 +84,8 @@ class SigmaConfig:
     @property
     def index(self) -> pd.Index:
         """Returns the name index of all sigma rows."""
-        return pd.Index(self.__dict__.keys())
-    
+        return pd.Index(idx for idx in self.__dict__.keys() if idx != "_default_index")
+
     @property
     def columns(self) -> pd.Index:
         """Returns sigma columns names as pandas index."""
@@ -119,17 +119,21 @@ class SigmaConfig:
     def append(self, name: str | None = None, angle_unit: str | None = None, **kwargs):
         """Append a new sigma row to the sigma config."""
         data = {}
-        
+
         for key in self._default.keys():
             input = kwargs.get(key)
-            data[key] = input if input is not None else self.default.get(key, angle_unit=angle_unit)
-            
+            data[key] = (
+                input
+                if input is not None
+                else self.default.get(key, angle_unit=angle_unit)
+            )
+
         name = self._validate_name(name)
         if name in self.index:
             raise IndexError(f"Given index name already exist: {name}")
-        
+
         data["name"] = name
-        
+
         self.__setattr__(name, SigmaRow(angle_unit=angle_unit, **data))
 
     def display(self, angle_unit: str | None = None) -> pd.DataFrame:
@@ -146,7 +150,7 @@ class SigmaConfig:
         """Return a sigma row as a pandas Series, converting angular units."""
         if index not in self.index:
             raise IndexError(f"Sigma config does not have index: {index}")
-        
+
         data = self.display(angle_unit=angle_unit)
         return data.loc[index]
 
