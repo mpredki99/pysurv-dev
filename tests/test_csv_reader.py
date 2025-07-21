@@ -491,3 +491,37 @@ def test_import_empty_controls_none(
     reader = CSVReader(valid_measurements_file, empty_file, validation_mode=None)
     reader.read_controls()
     assert reader.controls.empty
+
+
+def test_import_measurements_first(
+    valid_measurements_file: str, valid_controls_file: str
+) -> None:
+    """Test that reading measurements creates stations dataset as well."""
+    reader = CSVReader(valid_measurements_file, valid_controls_file)
+    reader.read_measurements()
+    assert reader.measurements is not None
+    assert reader.stations is not None
+
+
+def test_import_stations_first(
+    valid_measurements_file: str, valid_controls_file: str
+) -> None:
+    """Test that reading stations creates measurements dataset as well."""
+    reader = CSVReader(valid_measurements_file, valid_controls_file)
+    reader.read_stations()
+    assert reader.measurements is not None
+    assert reader.stations is not None
+
+
+def test_get_dataset(valid_measurements_file: str, valid_controls_file: str) -> None:
+    """Test that get dataset returns proper dataset."""
+    reader = CSVReader(valid_measurements_file, valid_controls_file)
+    reader.read_measurements()
+    reader.read_controls()
+
+    with pytest.raises(KeyError):
+        reader.get_dataset("Invalid_value")
+
+    assert "trg_id" in reader.get_dataset("Measurements")
+    assert "stn_id" in reader.get_dataset("Stations")
+    assert "id" in reader.get_dataset("Controls")
