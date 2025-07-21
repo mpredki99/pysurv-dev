@@ -10,9 +10,9 @@ from pysurv.exceptions import InvalidAngleUnitError
 
 
 def validate_sigma(
-    v: float, 
-    enable_minus_one: bool = False, 
-    error_message: str = "Sigma values must be >= 0."
+    v: float,
+    enable_minus_one: bool = False,
+    error_message: str = "Sigma values must be >= 0.",
 ) -> float:
     """Validate and return sigma value or raise error with appropriate message."""
     is_empty = pd.isna(v)
@@ -33,6 +33,7 @@ def validate_angle_unit(v: str | None) -> str:
     """Validate and return angle unit. If None return value from config object."""
     if v is None:
         from pysurv.config import config
+
         v = config.angle_unit
     if v not in ["rad", "grad", "gon", "deg"]:
         raise InvalidAngleUnitError(
