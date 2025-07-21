@@ -151,9 +151,6 @@ class BaseReader(ABC):
         dataset = self.get_dataset(dataset_name)
         model = models[dataset_name]
 
-        if dataset is None:
-            raise EmptyDatasetError(f"{dataset_name} dataset is None.")
-
         for row_idx, row in enumerate(dataset.itertuples(index=False)):
             try:
                 model(**row._asdict())
