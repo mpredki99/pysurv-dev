@@ -19,6 +19,7 @@ class MeasurementModel(BaseModel):
     including station and target identifiers, measured values (distances, angles, coordinate differences),
     and their associated standard deviations.
     """
+
     stn_pk: int
     trg_id: str
     trg_h: float | None = None
@@ -77,6 +78,7 @@ class ControlPointModel(BaseModel):
     This model is used to validate information about a control point,
     including its identifier, coordinates, and associated standard deviations.
     """
+
     id: str
     x: float | None = None
     y: float | None = None
@@ -105,6 +107,7 @@ class StationModel(BaseModel):
     including its primary key, identifier, height, standard deviation of height,
     and orientation.
     """
+
     stn_pk: int
     stn_id: str
     stn_h: float | None = None
