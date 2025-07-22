@@ -6,7 +6,7 @@
 
 import os
 import tempfile
-from typing import Any, Generator
+from typing import Any, Dict, Generator, List
 
 import numpy as np
 import pandas as pd
@@ -35,16 +35,16 @@ def config_test():
     original_angle_unit = config.angle_unit
     yield
     config.angle_unit = original_angle_unit
-    
-    
+
+
 @pytest.fixture
-def angle_units():
+def angle_units() -> List[str]:
     """Returns list of angle units."""
     return ["rad", "grad", "gon", "deg"]
-        
-        
+
+
 @pytest.fixture
-def rho():
+def rho() -> Dict[str, float]:
     """Returns a dictionary of angle unit conversion factors."""
     return {
         "rad": 1,
