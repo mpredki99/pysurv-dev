@@ -144,7 +144,9 @@ def test_append_invalid_name() -> None:
         sigma_config.append("123 Not identifier")
 
 
-def test_append_full_row(sigma_columns: tuple[str], angle_units: tuple[str], rho: dict[str, float]) -> None:
+def test_append_full_row(
+    sigma_columns: tuple[str], angle_units: tuple[str], rho: dict[str, float]
+) -> None:
     """Test appending a full row with all columns."""
     new_row = {
         "stn_sh": 1,
@@ -177,7 +179,9 @@ def test_append_full_row(sigma_columns: tuple[str], angle_units: tuple[str], rho
                 assert sigma_config[new_row_name][col] == new_row[col] / rho[unit]
 
 
-def test_append_incomplete_row(sigma_columns: tuple[str], angle_units: tuple[str], rho: dict[str, float]) -> None:
+def test_append_incomplete_row(
+    sigma_columns: tuple[str], angle_units: tuple[str], rho: dict[str, float]
+) -> None:
     """Test appending a row with missing columns uses defaults."""
     incomplete_row = {
         "stn_sh": None,
