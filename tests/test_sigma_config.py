@@ -4,7 +4,7 @@
 # Licensed under the GNU General Public License v3.0.
 # Full text of the license can be found in the LICENSE and COPYING files in the repository.
 
-from typing import List
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -17,9 +17,9 @@ from pysurv.warnings import DefaultIndexWarning
 
 
 @pytest.fixture
-def sigma_columns() -> List[str]:
+def sigma_columns() -> tuple[str]:
     """Returns list of sigma columns."""
-    return [
+    return (
         "stn_sh",
         "ssd",
         "shd",
@@ -34,7 +34,7 @@ def sigma_columns() -> List[str]:
         "sx",
         "sy",
         "sz",
-    ]
+    )
 
 
 def test_singleton() -> None:
@@ -126,13 +126,13 @@ def test_getitem_invalid() -> None:
         sigma_config["invalid_name"]
 
 
-def test_sigma_cofig_columns(sigma_columns: List[str]) -> None:
+def test_sigma_cofig_columns(sigma_columns: tuple[str]) -> None:
     """Test that all sigma columns are present in the dataframe."""
     for col in sigma_columns:
         assert col in sigma_config.columns
 
 
-def test_sigma_cofig_columns_type(sigma_columns: List[str]) -> None:
+def test_sigma_cofig_columns_type(sigma_columns: tuple[str]) -> None:
     """Test that all sigma columns are of type float."""
     for col in sigma_columns:
         assert sigma_config[col].dtype == float
@@ -144,7 +144,7 @@ def test_append_invalid_name() -> None:
         sigma_config.append("123 Not identifier")
 
 
-def test_append_full_row(sigma_columns: List[str]) -> None:
+def test_append_full_row(sigma_columns: tuple[str], angle_units: tuple[str], rho: dict[str, float]) -> None:
     """Test appending a full row with all columns."""
     new_row = {
         "stn_sh": 1,
@@ -163,17 +163,10 @@ def test_append_full_row(sigma_columns: List[str]) -> None:
         "sy": 0,
         "sz": 1,
     }
-    angle_units = ["rad", "grad", "gon", "deg"]
-    angle_unit_converter = {
-        "rad": 1,
-        "grad": np.pi / 200,
-        "gon": np.pi / 200,
-        "deg": np.pi / 180,
-    }
 
-    for angle_unit in angle_units:
-        new_row_name = f"new_row_{angle_unit}"
-        sigma_config.append(name=new_row_name, angle_unit=angle_unit, **new_row)
+    for unit in angle_units:
+        new_row_name = f"new_row_{unit}"
+        sigma_config.append(name=new_row_name, angle_unit=unit, **new_row)
 
         assert new_row_name in sigma_config.index
 
@@ -181,14 +174,10 @@ def test_append_full_row(sigma_columns: List[str]) -> None:
             if col not in ["sa", "shz", "svz", "svh"]:
                 assert sigma_config[new_row_name][col] == new_row[col]
             else:
-                # Convert from rad to angle unit
-                assert (
-                    sigma_config[new_row_name][col]
-                    == angle_unit_converter[angle_unit] * new_row[col]
-                )
+                assert sigma_config[new_row_name][col] == new_row[col] / rho[unit]
 
 
-def test_append_incomplete_row(sigma_columns: List[str]) -> None:
+def test_append_incomplete_row(sigma_columns: tuple[str], angle_units: tuple[str], rho: dict[str, float]) -> None:
     """Test appending a row with missing columns uses defaults."""
     incomplete_row = {
         "stn_sh": None,
@@ -204,19 +193,11 @@ def test_append_incomplete_row(sigma_columns: List[str]) -> None:
         "sy": 2,
         "sz": None,
     }
-    missing_columns = ["stn_sh", "ssd", "shd", "sdy", "svz", "svh", "sx", "sz"]
-    angle_units = ["rad", "grad", "gon", "deg"]
-    angle_unit_converter = {
-        "rad": 1,
-        "grad": np.pi / 200,
-        "gon": np.pi / 200,
-        "deg": np.pi / 180,
-    }
+    missing_columns = ("stn_sh", "ssd", "shd", "sdy", "svz", "svh", "sx", "sz")
 
-    for angle_unit in angle_units:
-        new_row_name = f"incomplete_row_{angle_unit}"
-
-        sigma_config.append(new_row_name, angle_unit=angle_unit, **incomplete_row)
+    for unit in angle_units:
+        new_row_name = f"incomplete_row_{unit}"
+        sigma_config.append(new_row_name, angle_unit=unit, **incomplete_row)
 
         assert new_row_name in sigma_config.index
 
@@ -227,8 +208,7 @@ def test_append_incomplete_row(sigma_columns: List[str]) -> None:
                 assert sigma_config[new_row_name][col] == incomplete_row[col]
             else:
                 assert (
-                    sigma_config[new_row_name][col]
-                    == angle_unit_converter[angle_unit] * incomplete_row[col]
+                    sigma_config[new_row_name][col] == incomplete_row[col] / rho[unit]
                 )
 
 
@@ -262,7 +242,7 @@ def test_append_invalid_values() -> None:
         sigma_config.append("invalid_row", angle_unit="rad", **invalid_row)
 
 
-def test_display(sigma_columns: List[str]) -> None:
+def test_display(sigma_columns: tuple[str], angle_units: tuple[str]) -> None:
     """Test display method returns correct values."""
     to_display = {
         "stn_sh": 1,
@@ -281,21 +261,17 @@ def test_display(sigma_columns: List[str]) -> None:
         "sy": 0,
         "sz": 1,
     }
-    angle_units = ["rad", "grad", "gon", "deg"]
 
-    for angle_unit in angle_units:
-        new_row_name = f"to_display_{angle_unit}"
+    for unit in angle_units:
+        new_row_name = f"to_display_{unit}"
+        sigma_config.append(new_row_name, angle_unit=unit, **to_display)
+        displayed = sigma_config.display(angle_unit=unit)
 
-        sigma_config.append(new_row_name, angle_unit=angle_unit, **to_display)
-
-        assert new_row_name in sigma_config.index
-
-        displayed = sigma_config.display(angle_unit=angle_unit)
         for col in sigma_columns:
             assert np.round(displayed.at[new_row_name, col], 15) == to_display[col]
 
 
-def test_get_row(sigma_columns: List[str]) -> None:
+def test_get_row(sigma_columns: tuple[str], angle_units: tuple[str]) -> None:
     """Test get_row returns correct values."""
     get_row = {
         "stn_sh": 1,
@@ -314,16 +290,12 @@ def test_get_row(sigma_columns: List[str]) -> None:
         "sy": 0,
         "sz": 1,
     }
-    angle_units = ["rad", "grad", "gon", "deg"]
 
-    for angle_unit in angle_units:
-        new_row_name = f"get_row_{angle_unit}"
+    for unit in angle_units:
+        new_row_name = f"get_row_{unit}"
+        sigma_config.append(new_row_name, angle_unit=unit, **get_row)
 
-        sigma_config.append(new_row_name, angle_unit=angle_unit, **get_row)
-
-        assert new_row_name in sigma_config.index
-
-        row = sigma_config.get_row(new_row_name, angle_unit=angle_unit)
+        row = sigma_config.get_row(new_row_name, angle_unit=unit)
         for col in sigma_columns:
             assert np.round(row[col], 15) == get_row[col]
 
@@ -365,26 +337,19 @@ def test_field_setter() -> None:
     assert sigma_config.default.shz == 20
 
 
-def test_field_set_method() -> None:
+def test_field_set_method(angle_units: tuple[str], rho: dict[str, float]) -> None:
     """Test setting fields via set() method with angle conversions."""
-    angle_units = ["rad", "grad", "gon", "deg"]
-    angle_unit_converter = {
-        "rad": 1,
-        "grad": np.pi / 200,
-        "gon": np.pi / 200,
-        "deg": np.pi / 180,
-    }
 
-    for angle_unit in angle_units:
+    for unit in angle_units:
         # Do not convert for distances
-        sigma_config.default.set("shd", 20, angle_unit=angle_unit)
+        sigma_config.default.set("shd", 20, angle_unit=unit)
         assert sigma_config.default.shd == 20
         # Enable -1 for control points
-        sigma_config.default.set("sy", -1, angle_unit=angle_unit)
+        sigma_config.default.set("sy", -1, angle_unit=unit)
         assert sigma_config.default.sy == -1
         # Do conversion for angles
-        sigma_config.default.set("svz", 20, angle_unit=angle_unit)
-        assert sigma_config.default.svz == 20 * angle_unit_converter[angle_unit]
+        sigma_config.default.set("svz", 20, angle_unit=unit)
+        assert sigma_config.default.svz == 20 / rho[unit]
 
 
 def test_field_setter_invalid() -> None:
@@ -397,10 +362,8 @@ def test_field_setter_invalid() -> None:
         sigma_config.default.shz = -1
 
 
-def test_field_set_method_invalid() -> None:
+def test_field_set_method_invalid(angle_units: tuple[str]) -> None:
     """Test setting invalid values via set() method raises ValueError."""
-    angle_units = ["rad", "grad", "gon", "deg"]
-
     for angle_unit in angle_units:
         with pytest.raises(ValueError):
             sigma_config.default.set("shd", -2, angle_unit=angle_unit)
@@ -419,7 +382,7 @@ def test_append_changed_default() -> None:
     assert sigma_config.changed_default.ssd == 20
 
 
-def test_restore_default(sigma_columns: List[str]) -> None:
+def test_restore_default(sigma_columns: tuple[str]) -> None:
     """Test restore default sigma values restores from constants module."""
     sigma_config.default.trg_sh = 30
     sigma_config.default.sdx = 15
@@ -441,20 +404,18 @@ def test_restore_default(sigma_columns: List[str]) -> None:
         assert sigma_config.default[col] == DEFAULT_SIGMAS[col]
 
 
-def test_get() -> None:
+def test_get(angle_units: tuple[str]) -> None:
     """Test get() method returns correct value with angle conversion."""
-    angle_units = ["rad", "grad", "gon", "deg"]
-
-    for angle_unit in angle_units:
+    for unit in angle_units:
         # Do not convert for distances
-        sigma_config.default.set("shd", 50, angle_unit=angle_unit)
-        assert sigma_config.default.get("shd", angle_unit=angle_unit) == 50
+        sigma_config.default.set("shd", 50, angle_unit=unit)
+        assert sigma_config.default.get("shd", angle_unit=unit) == 50
         # Enable -1 for control points
-        sigma_config.default.set("sy", -1, angle_unit=angle_unit)
-        assert sigma_config.default.get("sy", angle_unit=angle_unit) == -1
+        sigma_config.default.set("sy", -1, angle_unit=unit)
+        assert sigma_config.default.get("sy", angle_unit=unit) == -1
         # Do conversion for angles
-        sigma_config.default.set("svz", 50, angle_unit=angle_unit)
-        assert sigma_config.default.get("svz", angle_unit=angle_unit) == 50
+        sigma_config.default.set("svz", 50, angle_unit=unit)
+        assert sigma_config.default.get("svz", angle_unit=unit) == 50
 
 
 def test_get_invalid_key() -> None:

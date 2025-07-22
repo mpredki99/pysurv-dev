@@ -6,7 +6,7 @@
 
 import os
 import tempfile
-from typing import Any, Dict, Generator, List
+from typing import Generator
 
 import numpy as np
 import pandas as pd
@@ -38,13 +38,13 @@ def config_test():
 
 
 @pytest.fixture
-def angle_units() -> List[str]:
+def angle_units() -> tuple[str]:
     """Returns list of angle units."""
-    return ["rad", "grad", "gon", "deg"]
+    return ("rad", "grad", "gon", "deg")
 
 
 @pytest.fixture
-def rho() -> Dict[str, float]:
+def rho() -> dict[str, float]:
     """Returns a dictionary of angle unit conversion factors."""
     return {
         "rad": 1,
@@ -190,7 +190,7 @@ def invalid_measurements_file(
 @pytest.fixture
 def invalid_controls_data() -> pd.DataFrame:
     """Returns a DataFrame with invalid control data."""
-    data: dict[str, list[Any]] = {
+    data = {
         "id": ["C1", "C2", "C3", "C4", "C5"],
         "x": ["Invalid type", 2000.00, 3000.00, 4000.00, 5000.00],
         "y": [1000.00, "Invalid type", 3000.00, 4000.00, 5000.00],
@@ -282,7 +282,7 @@ def controls_file_column_to_rename_e_n_el(
 @pytest.fixture
 def controls_data_column_to_rename_easting_northing_height() -> pd.DataFrame:
     """Returns a DataFrame with EASTING, NORTHING, HEIGHT columns for controls."""
-    data: dict[str, list[Any]] = {
+    data = {
         "NR": ["C1", "C2", "C3", "C4", "C5"],
         "EASTING": [1000.00, 2000.00, 3000.00, 4000.00, 5000.00],
         "NORTHING": [1000.00, 2000.00, 3000.00, 4000.00, 5000.00],
@@ -424,7 +424,7 @@ def measurements_file_missing_mandatory_columns(
 @pytest.fixture
 def controls_data_missing_mandatory_columns() -> pd.DataFrame:
     """Returns DataFrame with missing mandatory control columns."""
-    data: dict[str, list[Any]] = {
+    data = {
         "x": [1000.00, 2000.00, 3000.00, 4000.00, 5000.00],
         "y": [1000.00, 2000.00, 3000.00, 4000.00, 5000.00],
         "z": [100.00, 100.10, 100.20, None, 100.40],
