@@ -8,6 +8,7 @@ import os
 import tempfile
 from typing import Any, Generator
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -34,6 +35,23 @@ def config_test():
     original_angle_unit = config.angle_unit
     yield
     config.angle_unit = original_angle_unit
+    
+    
+@pytest.fixture
+def angle_units():
+    """Returns list of angle units."""
+    return ["rad", "grad", "gon", "deg"]
+        
+        
+@pytest.fixture
+def rho():
+    """Returns a dictionary of angle unit conversion factors."""
+    return {
+        "rad": 1,
+        "grad": 200 / np.pi,
+        "gon": 200 / np.pi,
+        "deg": 180 / np.pi,
+    }
 
 
 @pytest.fixture
