@@ -8,8 +8,9 @@ from typing import Iterable
 
 import pandas as pd
 
-from pysurv.basic import from_rad, to_rad
-from pysurv.validators import MeasurementModel
+from pysurv.basic.basic import from_rad, to_rad
+from pysurv.validators._models import MeasurementModel
+from pysurv.validators._validators import validate_angle_unit
 
 from .angular_dataset import AngularDataset
 
@@ -37,6 +38,8 @@ class Measurements(AngularDataset):
 
         _first_init = kwargs.pop("_first_init", True)
         super().__init__(data, **kwargs)
+
+        self._angle_unit = validate_angle_unit(angle_unit)
 
         if _first_init:
             index_columns = [
