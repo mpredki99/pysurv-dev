@@ -31,44 +31,44 @@ obs_eqations_adapter = {
         hd_obs_eq, value, coord_diff, matrix_x_col_indices
     ),
     "vd": lambda value, coord_diff, matrix_x_col_indices: (
-        (
+        [
             matrix_x_col_indices["z_stn"],
             matrix_x_col_indices["z_trg"],
-        ),
+        ],
         *vector_obs_eq(value, coord_diff["dz"]),
     ),
     "dx": lambda value, coord_diff, matrix_x_col_indices: (
-        (
+        [
             matrix_x_col_indices["x_stn"],
             matrix_x_col_indices["x_trg"],
-        ),
+        ],
         *vector_obs_eq(value, coord_diff["dx"]),
     ),
     "dy": lambda value, coord_diff, matrix_x_col_indices: (
-        (
+        [
             matrix_x_col_indices["y_stn"],
             matrix_x_col_indices["y_trg"],
-        ),
+        ],
         *vector_obs_eq(value, coord_diff["dy"]),
     ),
     "dz": lambda value, coord_diff, matrix_x_col_indices: (
-        (
+        [
             matrix_x_col_indices["z_stn"],
             matrix_x_col_indices["z_trg"],
-        ),
+        ],
         *vector_obs_eq(value, coord_diff["dz"]),
     ),
     "a": lambda value, coord_diff, matrix_x_col_indices: apply_2D(
         a_obs_eq, value, coord_diff, matrix_x_col_indices
     ),
     "hz": lambda value, coord_diff, matrix_x_col_indices: (
-        (
+        [
             matrix_x_col_indices["x_stn"],
             matrix_x_col_indices["y_stn"],
             matrix_x_col_indices["orientation_idx"],
             matrix_x_col_indices["x_trg"],
             matrix_x_col_indices["y_trg"],
-        ),
+        ],
         *hz_obs_eq(
             value, coord_diff["dx"], coord_diff["dy"], coord_diff["orientation"]
         ),
@@ -98,7 +98,7 @@ def apply_3D(
     y_trg = matrix_x_col_indices["y_trg"]
     z_trg = matrix_x_col_indices["z_trg"]
 
-    output_indices = x_stn, y_stn, z_stn, x_trg, y_trg, z_trg
+    output_indices = [x_stn, y_stn, z_stn, x_trg, y_trg, z_trg]
     output_coefficients, free_term = func(meas_value, dx, dy, dz)
     return output_indices, output_coefficients, free_term
 
@@ -113,6 +113,6 @@ def apply_2D(
     x_trg = matrix_x_col_indices["x_trg"]
     y_trg = matrix_x_col_indices["y_trg"]
 
-    output_indices = x_stn, y_stn, x_trg, y_trg
+    output_indices = [x_stn, y_stn, x_trg, y_trg]
     output_coefficients, free_term = func(meas_value, dx, dy)
     return output_indices, output_coefficients, free_term

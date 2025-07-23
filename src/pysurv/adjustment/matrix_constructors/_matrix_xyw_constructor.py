@@ -67,5 +67,5 @@ class MatrixXYWConstructor(MatrixXYWsWConstructor):
         matrix_x_output_indices, coeficients, free_term = observation_func(
             value, coord_diff, matrix_x_col_indices
         )
-        matrix_x_row[[*matrix_x_output_indices]] = coeficients
+        matrix_x_row[matrix_x_output_indices] = coeficients
         matrix_y[matrix_y_row_idx] = free_term
