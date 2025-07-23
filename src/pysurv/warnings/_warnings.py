@@ -23,3 +23,15 @@ class AdjustmentWarning(PySurvWarning):
 
 class DefaultIndexWarning(AdjustmentWarning):
     pass
+
+
+class DataWarning(PySurvWarning):
+    pass
+
+
+class InvalidGeometryWarning(DataWarning):
+    pass
+
+
+class GeometryAssigningWarning(DataWarning):
+    pass
