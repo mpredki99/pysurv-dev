@@ -12,46 +12,37 @@ import pytest
 from pysurv.data import Measurements
 
 
-@pytest.fixture
-def test_data() -> Dict[str, list]:
-    """Return test data for measurements."""
-    return {
-        "stn_pk": [0, 0, 1],
-        "trg_id": ["T2", "T3", "T1"],
-        "hz": [0.0000, 100.0000, 200.0000],
-        "vz": [0.0000, 100.0000, 200.0000],
-    }
-
-
-def test_set_index(test_data: dict) -> None:
+def test_set_index(measurement_angles_data: pd.DataFrame) -> None:
     """Test that index columns are set correctly during initialization."""
-    measurements = Measurements(test_data)
+    measurements = Measurements(measurement_angles_data)
     assert "stn_pk" in measurements.index.names
     assert "trg_id" in measurements.index.names
 
 
-def test_angle_conversion(test_data: dict, angle_units: list, rho: dict) -> None:
+def test_angle_conversion(
+    measurement_angles_data: pd.DataFrame, angle_units: list, rho: dict
+) -> None:
     """Test angle conversion during initialization."""
     for unit in angle_units:
-        measurements = Measurements(test_data, angle_unit=unit)
+        measurements = Measurements(measurement_angles_data, angle_unit=unit)
         for col in ["hz", "vz"]:
             assert measurements.at[(0, "T2"), col] == 0.0000
             assert measurements.at[(0, "T3"), col] == 100.0000 / rho[unit]
             assert measurements.at[(1, "T1"), col] == 200.0000 / rho[unit]
 
 
-def test_copy(test_data: dict) -> None:
+def test_copy(measurement_angles_data: pd.DataFrame) -> None:
     """Test copying Measurements returns a new instance returns proper columns."""
-    measurements = Measurements(test_data)
+    measurements = Measurements(measurement_angles_data)
     measurements_copy = measurements.copy()
 
     assert isinstance(measurements_copy, Measurements)
     assert measurements is not measurements_copy
 
 
-def test_linear_measurement_columns(valid_measurements_data: dict) -> None:
+def test_linear_measurement_columns(valid_measurement_data: pd.DataFrame) -> None:
     """Test linear measurement columns property returns proper columns."""
-    measurements = Measurements(valid_measurements_data)
+    measurements = Measurements(valid_measurement_data)
 
     linear_measurement_columns = {"sd", "hd", "vd", "dx", "dy", "dz"}
 
@@ -59,9 +50,9 @@ def test_linear_measurement_columns(valid_measurements_data: dict) -> None:
     assert set(measurements.linear_measurement_columns) == linear_measurement_columns
 
 
-def test_linear_sigma_columns(valid_measurements_data: dict) -> None:
+def test_linear_sigma_columns(valid_measurement_data: pd.DataFrame) -> None:
     """Test linear sigma columns property returns proper columns."""
-    measurements = Measurements(valid_measurements_data)
+    measurements = Measurements(valid_measurement_data)
 
     linear_sigma_columns = {"ssd", "shd", "svd", "sdx", "sdy", "sdz"}
 
@@ -69,9 +60,9 @@ def test_linear_sigma_columns(valid_measurements_data: dict) -> None:
     assert set(measurements.linear_sigma_columns) == linear_sigma_columns
 
 
-def test_linear_columns(valid_measurements_data: dict) -> None:
+def test_linear_columns(valid_measurement_data: pd.DataFrame) -> None:
     """Test linear columns property returns proper columns."""
-    measurements = Measurements(valid_measurements_data)
+    measurements = Measurements(valid_measurement_data)
 
     linear_measurement_columns = {"sd", "hd", "vd", "dx", "dy", "dz"}
     linear_sigma_columns = {"ssd", "shd", "svd", "sdx", "sdy", "sdz"}
@@ -81,9 +72,9 @@ def test_linear_columns(valid_measurements_data: dict) -> None:
     assert set(measurements.linear_columns) == linear_columns
 
 
-def test_angular_measurement_columns(valid_measurements_data: dict) -> None:
+def test_angular_measurement_columns(valid_measurement_data: pd.DataFrame) -> None:
     """Test angular measurement columns property returns proper columns."""
-    measurements = Measurements(valid_measurements_data)
+    measurements = Measurements(valid_measurement_data)
 
     angular_measurement_columns = {"a", "hz", "vz", "vh"}
 
@@ -91,9 +82,9 @@ def test_angular_measurement_columns(valid_measurements_data: dict) -> None:
     assert set(measurements.angular_measurement_columns) == angular_measurement_columns
 
 
-def test_angular_sigma_columns(valid_measurements_data: dict) -> None:
+def test_angular_sigma_columns(valid_measurement_data: pd.DataFrame) -> None:
     """Test angular sigma columns property returns proper columns."""
-    measurements = Measurements(valid_measurements_data)
+    measurements = Measurements(valid_measurement_data)
 
     angular_sigma_columns = {"sa", "shz", "svz", "svh"}
 
@@ -101,9 +92,9 @@ def test_angular_sigma_columns(valid_measurements_data: dict) -> None:
     assert set(measurements.angular_sigma_columns) == angular_sigma_columns
 
 
-def test_angular_columns(valid_measurements_data: dict) -> None:
+def test_angular_columns(valid_measurement_data: dict) -> None:
     """Test angular columns property returns proper columns."""
-    measurements = Measurements(valid_measurements_data)
+    measurements = Measurements(valid_measurement_data)
 
     angular_measurement_columns = {"a", "hz", "vz", "vh"}
     angular_sigma_columns = {"sa", "shz", "svz", "svh"}
@@ -113,9 +104,9 @@ def test_angular_columns(valid_measurements_data: dict) -> None:
     assert set(measurements.angular_columns) == angular_columns
 
 
-def test_measurement_columns(valid_measurements_data: dict) -> None:
+def test_measurement_columns(valid_measurement_data: dict) -> None:
     """Test measurement columns property returns proper columns."""
-    measurements = Measurements(valid_measurements_data)
+    measurements = Measurements(valid_measurement_data)
 
     linear_measurement_columns = {"sd", "hd", "vd", "dx", "dy", "dz"}
     angular_measurement_columns = {"a", "hz", "vz", "vh"}
@@ -125,9 +116,9 @@ def test_measurement_columns(valid_measurements_data: dict) -> None:
     assert set(measurements.measurement_columns) == measurement_columns
 
 
-def test_sigma_columns(valid_measurements_data: dict) -> None:
+def test_sigma_columns(valid_measurement_data: pd.DataFrame) -> None:
     """Test sigma columns property returns proper columns."""
-    measurements = Measurements(valid_measurements_data)
+    measurements = Measurements(valid_measurement_data)
 
     linear_sigma_columns = {"ssd", "shd", "svd", "sdx", "sdy", "sdz"}
     angular_sigma_columns = {"sa", "shz", "svz", "svh"}
@@ -137,35 +128,37 @@ def test_sigma_columns(valid_measurements_data: dict) -> None:
     assert set(measurements.sigma_columns) == sigma_columns
 
 
-def test_measurement_data(valid_measurements_data: dict) -> None:
+def test_measurement_data(valid_measurement_data: pd.DataFrame) -> None:
     """Test measurement_data property returns correct columns and type."""
-    measurements = Measurements(valid_measurements_data)
+    measurements = Measurements(valid_measurement_data)
 
     assert set(measurements.measurement_data.columns) == set(
         measurements.measurement_columns
     )
     assert isinstance(measurements.measurement_data, Measurements)
+    assert not measurements.measurement_data.empty
 
 
-def test_sigma_data(valid_measurements_data: dict) -> None:
+def test_sigma_data(valid_measurement_data: pd.DataFrame) -> None:
     """Test sigma_data property returns correct columns and type."""
-    measurements = Measurements(valid_measurements_data)
+    measurements = Measurements(valid_measurement_data)
 
     assert set(measurements.sigma_data.columns) == set(measurements.sigma_columns)
     assert isinstance(measurements.sigma_data, Measurements)
+    assert not measurements.sigma_data.empty
 
 
-def test_constructor_sliced(valid_measurements_data: dict) -> None:
+def test_constructor_sliced(valid_measurement_data: pd.DataFrame) -> None:
     """Test slicing returns pandas Series."""
-    measurements = Measurements(valid_measurements_data)
+    measurements = Measurements(valid_measurement_data)
 
     assert isinstance(measurements["sd"], pd.Series)
     assert isinstance(measurements.sd, pd.Series)
 
 
-def test_display(test_data: dict, angle_units: list) -> None:
+def test_display(measurement_angles_data: pd.DataFrame, angle_units: list) -> None:
     """Test display method for angle conversion."""
-    measurements = Measurements(test_data)
+    measurements = Measurements(measurement_angles_data)
     for unit in angle_units:
         displayed = measurements.display(angle_unit=unit)
         for col in ["hz", "vz"]:

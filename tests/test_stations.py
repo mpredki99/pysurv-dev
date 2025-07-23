@@ -6,39 +6,27 @@
 
 import numpy as np
 import pandas as pd
-import pytest
 
 from pysurv.data import Stations
 
 
-@pytest.fixture
-def test_data() -> dict[str, list]:
-    """Returns test data for creating Stations dataset."""
-    return {
-        "stn_pk": [0, 1, 2],
-        "stn_id": ["stn_1", "stn_2", "stn_3"],
-        "stn_h": [1.653, 1.234, 0.0],
-        "stn_sh": [0.01, 0.01, 0.002],
-    }
-
-
-def test_set_index(test_data: dict[str, list]) -> None:
+def test_set_index(valid_station_data: pd.DataFrame) -> None:
     """Test that the index is set to 'stn_pk' on init."""
-    stations = Stations(test_data)
+    stations = Stations(valid_station_data)
 
     assert stations.index.name == "stn_pk"
 
 
-def test_copy(test_data: dict[str, list]) -> None:
+def test_copy(valid_station_data: pd.DataFrame) -> None:
     """Test that Stations.copy() returns a new Stations instance."""
-    stations = Stations(test_data)
+    stations = Stations(valid_station_data)
     stations_copy = stations.copy()
 
     assert isinstance(stations_copy, Stations)
     assert stations is not stations_copy
 
 
-def test_append_orientation_contant(test_data: dict[str, list]) -> None:
+def test_append_orientation_contant(valid_station_data: pd.DataFrame) -> None:
     """Test appending orientation constant to stations."""
     hz_data = pd.DataFrame(
         {
@@ -56,7 +44,7 @@ def test_append_orientation_contant(test_data: dict[str, list]) -> None:
         }
     ).set_index("id")
 
-    stations = Stations(test_data)
+    stations = Stations(valid_station_data)
     stations.append_orientation_constant(hz_data, ctrl_data)
 
     assert stations.at[0, "orientation"] == 0.0000
@@ -64,21 +52,23 @@ def test_append_orientation_contant(test_data: dict[str, list]) -> None:
     assert pd.isna(stations.at[2, "orientation"])
 
 
-def test_display_with_no_ang(test_data: dict[str, list]) -> None:
+def test_display_with_no_ang(valid_station_data: pd.DataFrame) -> None:
     """Test display method with no 'orientation' column."""
-    stations = Stations(test_data)
+    stations = Stations(valid_station_data)
     disp = stations.display()
 
     assert disp.index.name == "stn_pk"
 
 
 def test_display_with_ang(
-    test_data: dict[str, list], angle_units: tuple[str], rho: dict[str:float]
+    valid_station_data: pd.DataFrame, angle_units: tuple[str], rho: dict[str:float]
 ) -> None:
     """Test display method with 'orientation' column."""
 
-    test_data.update({"orientation": [0.0000, np.pi, pd.NA]})
-    stations_orientation = Stations(test_data)
+    valid_station_data.insert(
+        valid_station_data.shape[1], "orientation", [0.0000, np.pi, pd.NA]
+    )
+    stations_orientation = Stations(valid_station_data)
 
     for unit in angle_units:
         disp_orientation = stations_orientation.display(angle_unit=unit)
