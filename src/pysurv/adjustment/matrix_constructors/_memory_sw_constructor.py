@@ -16,7 +16,7 @@ from ._matrix_x_indexer import MatrixXIndexer
 
 class MemorySWConstructor(MatrixSWConstructor):
     """
-    Constructs the controls weight matrix (sW) for the coordinates using a memory-efficient,
+    Constructs the control point weights matrix (sW) for the coordinates using a memory-efficient,
     row-wise approach.
     """
 

@@ -16,7 +16,7 @@ from ._matrix_x_indexer import MatrixXIndexer
 
 class SpeedSWConstructor(MatrixSWConstructor):
     """
-    SpeedSWBuilder constructs the controls weight matrix (sW) for the coordinates using fast, vectorized approach.
+    SpeedSWBuilder constructs the control point weights matrix (sW) for the coordinates using fast, vectorized approach.
     """
 
     def __init__(
