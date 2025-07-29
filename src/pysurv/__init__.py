@@ -30,6 +30,8 @@ from . import adjustment, basic, data, exceptions, reader, validators, warnings
 from .adjustment.adjustment import Adjustment
 from .config import config
 from .data.dataset import Dataset
+from .project import Project
+from .project_factory import ProjectFactory
 
 __all__ = [
     "adjustment",
@@ -39,6 +41,8 @@ __all__ = [
     "data",
     "Dataset",
     "exceptions",
+    "Project",
+    "ProjectFactory",
     "reader",
     "validators",
     "warnings",
