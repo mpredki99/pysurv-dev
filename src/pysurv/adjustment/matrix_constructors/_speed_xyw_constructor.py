@@ -28,45 +28,54 @@ class SpeedXYWConstructor(MatrixXYWConstructor):
         default_sigmas_index: str | None,
     ) -> None:
         super().__init__(dataset, matrix_x_indexer, default_sigmas_index)
+        self._prepared_dataset = None
 
-    def build(
-        self, calculate_weights: bool
-    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray | None]:
-        """Builds and returns the X, Y, and W matrices for least squares adjustment."""
+    def _prepare_dataset(self, calculate_weights) -> None:
+        index_names = self._prepare_measurement_data()
+        if calculate_weights:
+            self._prepare_sigma_data(index_names)
+
+    def _prepare_measurement_data(self) -> list[str]:
         measurement_data = self._dataset.measurements.measurement_data
-        sigma_data = self._dataset.measurements.sigma_data
-        coordinates = self._dataset.controls.coordinates
-
         station_columns = self._dataset.stations.columns
-        coordinate_indices = self._matrix_x_indexer.coordinate_indices
-
-        X, Y, W = self._initialize_xyw_matrices(calculate_weights)
 
         index_names = list(measurement_data.index.names)
         index_names.extend(station_columns)
 
         measurement_data = self._merge_stations(measurement_data)
         measurement_data = self._melt_subset(measurement_data, index_names, "meas")
-        measurement_data.dropna(subset="meas_value", inplace=True)
 
-        if calculate_weights:
-            sigma_data = self._merge_stations(sigma_data)
-            sigma_data = self._fill_with_default_sigmas(sigma_data)
-            sigma_data = self._melt_subset(sigma_data, index_names, "sigma")
-
-            merge_on_cols = index_names.append("meas_type")
-            measurement_data = measurement_data.merge(
-                sigma_data, how="left", on=merge_on_cols
-            )
-
-        measurement_data = self._merge_controls(measurement_data, coordinates)
-        measurement_data = self._coord_differences(measurement_data)
-        measurement_data = self._merge_controls(measurement_data, coordinate_indices)
-
+        self._prepared_dataset = measurement_data.dropna(subset="meas_value")
+        self._merge_coordinte_indices()
         if "orientation" in station_columns:
-            measurement_data = self._merge_orientations(measurement_data)
+            self._merge_orientation_indices()
+        return index_names
 
-        for eq_row, row in enumerate(measurement_data.itertuples(index=False)):
+    def _prepare_sigma_data(self, index_names) -> None:
+        sigma_data = self._dataset.measurements.sigma_data
+
+        sigma_data = self._merge_stations(sigma_data)
+        sigma_data = self._fill_with_default_sigmas(sigma_data)
+        sigma_data = self._melt_subset(sigma_data, index_names, "sigma")
+
+        merge_on_cols = index_names.append("meas_type")
+        self._prepared_dataset = self._prepared_dataset.merge(
+            sigma_data, how="left", on=merge_on_cols
+        )
+
+    def build(
+        self, calculate_weights: bool
+    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray | None]:
+        """Builds and returns the X, Y, and W matrices for least squares adjustment."""
+        X, Y, W = self._initialize_xyw_matrices(calculate_weights)
+
+        if self._prepared_dataset is None:
+            self._prepare_dataset(calculate_weights)
+        elif "orientation" in self._prepared_dataset.columns:
+            self._update_orientations()
+        self._coord_differences()
+
+        for eq_row, row in enumerate(self._prepared_dataset.itertuples(index=False)):
             coord_diff = {
                 "dx": getattr(row, "dx", None),
                 "dy": getattr(row, "dy", None),
@@ -93,9 +102,15 @@ class SpeedXYWConstructor(MatrixXYWConstructor):
             )
 
             if calculate_weights:
-                W[eq_row] = 1 / getattr(row, "sigma_value") ** 2
+                W[eq_row] = self._get_weight(getattr(row, "sigma_value"))
 
         return X, Y, np.diag(W) if W is not None else None
+
+    def _get_weight(self, sigma_value: float) -> float:
+        if sigma_value > 0:
+            return 1 / sigma_value**2
+        else:
+            return 0
 
     def _merge_stations(self, subset: pd.DataFrame) -> pd.DataFrame:
         """Merge station attributes into the subset."""
@@ -135,46 +150,47 @@ class SpeedXYWConstructor(MatrixXYWConstructor):
         )
         return subset
 
-    def _merge_controls(
-        self, measurement_data: pd.DataFrame, ctrl_data: pd.DataFrame
-    ) -> pd.DataFrame:
+    def _merge_coordinte_indices(self) -> None:
+        coordinate_indices = self._matrix_x_indexer.coordinate_indices
+
         end_points = ["stn", "trg"]
         for point in end_points:
-            measurement_data = measurement_data.merge(
-                ctrl_data,
+            self._prepared_dataset = self._prepared_dataset.merge(
+                coordinate_indices,
                 how="left",
                 left_on=f"{point}_id",
                 right_on="id",
                 suffixes=[f"_{point}" for point in end_points],
             )
-        return measurement_data
 
-    def _coord_differences(self, measurement_data: pd.DataFrame) -> pd.DataFrame:
-        coord_columns = self._dataset.controls.coordinate_columns
-        for coord_col in coord_columns:
-            if coord_col != "z":
-                coord_stn = f"{coord_col}_stn"
-                coord_trg = f"{coord_col}_trg"
-                coord_diff = f"d{coord_col}"
-                measurement_data[coord_diff] = (
-                    measurement_data[coord_trg] - measurement_data[coord_stn]
-                )
-                measurement_data.drop(columns=coord_stn, inplace=True)
-                measurement_data.drop(columns=coord_trg, inplace=True)
-            else:
-                measurement_data["dz"] = (
-                    measurement_data["z_trg"]
-                    + measurement_data["trg_h"]
-                    - measurement_data["z_stn"]
-                    - measurement_data["stn_h"]
-                )
-                measurement_data.drop(columns="z_stn", inplace=True)
-                measurement_data.drop(columns="z_trg", inplace=True)
-        return measurement_data
-
-    def _merge_orientations(self, measurement_data: pd.DataFrame) -> pd.DataFrame:
+    def _merge_orientation_indices(self) -> None:
         orientation_indices = self._matrix_x_indexer.orientation_indices
-        measurement_data = measurement_data.merge(
+        self._prepared_dataset = self._prepared_dataset.merge(
             orientation_indices, how="left", on="stn_pk"
         )
-        return measurement_data
+        return self._prepared_dataset
+
+    def _update_orientations(self) -> pd.DataFrame:
+        orientations = self._dataset.stations.orientation
+        self._prepared_dataset["orientation"] = self._prepared_dataset.stn_pk.map(
+            orientations
+        )
+
+    def _coord_differences(self) -> None:
+        coordinates = self._dataset.controls.coordinates
+
+        for coord_col in coordinates.columns:
+            stn_coords = self._prepared_dataset.stn_id.map(coordinates[coord_col])
+            trg_coords = self._prepared_dataset.trg_id.map(coordinates[coord_col])
+
+            if coord_col != "z":
+                coord_diff = f"d{coord_col}"
+                self._prepared_dataset[coord_diff] = trg_coords - stn_coords
+
+            else:
+                self._prepared_dataset["dz"] = (
+                    trg_coords
+                    + self._prepared_dataset["trg_h"]
+                    - stn_coords
+                    - self._prepared_dataset["stn_h"]
+                )
