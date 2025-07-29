@@ -6,7 +6,31 @@
 
 import pandas as pd
 
-from pysurv.exceptions import InvalidAngleUnitError
+from pysurv.adjustment.robust import __all__ as robust_methods
+from pysurv.exceptions import InvalidAngleUnitError, InvalidMethodError
+
+
+def validate_angle_unit(v: str | None) -> str:
+    """Validate and return angle unit. If None return value from config object."""
+    if v is None:
+        from pysurv.config import config
+
+        v = config.angle_unit
+    if v not in ["rad", "grad", "gon", "deg"]:
+        raise InvalidAngleUnitError(
+            "Angle unit must be either 'rad', 'grad', 'gon', 'deg'."
+        )
+    return v
+
+
+def validate_method(method: str) -> str:
+    valid_methods = ["ordinary", "weighted"]
+    valid_methods.extend(robust_methods)
+    if method not in valid_methods:
+        raise InvalidMethodError(
+            f"Invalid weighting method. Valid methods: {valid_methods}"
+        )
+    return method
 
 
 def validate_sigma(
@@ -26,17 +50,4 @@ def validate_sigma(
 
     if error_condition:
         raise ValueError(f"{error_message} Got {v}.")
-    return v
-
-
-def validate_angle_unit(v: str | None) -> str:
-    """Validate and return angle unit. If None return value from config object."""
-    if v is None:
-        from pysurv.config import config
-
-        v = config.angle_unit
-    if v not in ["rad", "grad", "gon", "deg"]:
-        raise InvalidAngleUnitError(
-            "Angle unit must be either 'rad', 'grad', 'gon', 'deg'."
-        )
     return v

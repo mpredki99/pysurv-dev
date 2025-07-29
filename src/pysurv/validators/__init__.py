@@ -5,12 +5,13 @@
 # Full text of the license can be found in the LICENSE and COPYING files in the repository.
 
 from ._models import ControlPointModel, MeasurementModel, StationModel
-from ._validators import validate_angle_unit, validate_sigma
+from ._validators import validate_angle_unit, validate_method, validate_sigma
 
 __all__ = [
     "ControlPointModel",
     "MeasurementModel",
     "StationModel",
     "validate_angle_unit",
+    "validate_method",
     "validate_sigma",
 ]
