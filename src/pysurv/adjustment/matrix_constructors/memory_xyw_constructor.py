@@ -11,8 +11,8 @@ import pandas as pd
 
 from pysurv.data.dataset import Dataset
 
-from ._matrix_x_indexer import MatrixXIndexer
-from ._matrix_xyw_constructor import MatrixXYWConstructor
+from .indexer_matrix_x import IndexerMatrixX
+from .matrix_base_constructors import MatrixXYWConstructor
 
 
 class MemoryXYWConstructor(MatrixXYWConstructor):
@@ -27,7 +27,7 @@ class MemoryXYWConstructor(MatrixXYWConstructor):
     def __init__(
         self,
         dataset: Dataset,
-        matrix_x_indexer: MatrixXIndexer,
+        matrix_x_indexer: IndexerMatrixX,
         default_sigmas: pd.Series,
     ) -> None:
         super().__init__(dataset, matrix_x_indexer, default_sigmas)

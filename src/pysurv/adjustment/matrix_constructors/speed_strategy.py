@@ -6,15 +6,15 @@
 
 from pysurv.data.dataset import Dataset
 
-from ._matrix_x_indexer import MatrixXIndexer
-from ._matrix_xyw_sw_strategy import MatrixXYWsWStrategy
-from ._memory_sw_constructor import MemorySWConstructor
-from ._memory_xyw_constructor import MemoryXYWConstructor
+from .indexer_matrix_x import IndexerMatrixX
+from .speed_sw_constructor import SpeedSWConstructor
+from .speed_xyw_constructor import SpeedXYWConstructor
+from .strategy_matrix_xyw_sw import MatrixXYWsWStrategy
 
 
-class MemoryStrategy(MatrixXYWsWStrategy):
+class SpeedStrategy(MatrixXYWsWStrategy):
     """
-    MemoryStrategy implements a memory-efficient row-wise strategy for constructing the design matrix (X),
+    SpeedStrategy implements a fast, vectorized strategy for constructing the design matrix (X),
     observation vector (Y), observation weights (W), and control weights (sW) for least squares
     adjustment in surveying networks.
     """
@@ -22,23 +22,22 @@ class MemoryStrategy(MatrixXYWsWStrategy):
     def __init__(
         self,
         dataset: Dataset,
-        matrix_x_indexer: MatrixXIndexer,
+        matrix_x_indexer: IndexerMatrixX,
         default_sigmas_index: str | None,
     ) -> None:
-        super().__init__()
-        self._xyw_builder = MemoryXYWConstructor(
+        self._xyw_builder = SpeedXYWConstructor(
             dataset, matrix_x_indexer, default_sigmas_index
         )
-        self._sw_builder = MemorySWConstructor(
+        self._sw_builder = SpeedSWConstructor(
             dataset, matrix_x_indexer, default_sigmas_index
         )
 
     @property
     def xyw_constructor(self):
-        """Returns memory safe constructor for X, Y, W matrices."""
+        """Returns speed constructor for X, Y, W matrices."""
         return self._xyw_builder
 
     @property
     def sw_constructor(self):
-        """Returns memory safe constructor for sW matrix."""
+        """Returns speed constructor for sW matrix."""
         return self._sw_builder

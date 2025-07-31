@@ -6,9 +6,14 @@
 
 from abc import ABC, abstractmethod
 
+from .matrices import Matrices
 
-class LSQIterationStrategy(ABC):
+
+class Iteration(ABC):
     """Abstract base class for LSQ iteration strategy objects."""
+
+    def __init__(self, lsq_matrices: Matrices) -> None:
+        self._lsq_matrices = lsq_matrices
 
     @abstractmethod
     def run(self):

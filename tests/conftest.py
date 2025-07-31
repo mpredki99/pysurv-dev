@@ -13,7 +13,7 @@ import pandas as pd
 import pytest
 
 from pysurv import config
-from pysurv.adjustment import sigma_config
+from pysurv.adjustment import config_sigma
 
 
 # Fixtures for restoring original state config objects
@@ -28,14 +28,14 @@ def reset_config_state():
 @pytest.fixture(autouse=True)
 def reset_sigma_config_state():
     """Reset sigma_config to its default state after each test."""
-    default_index = sigma_config.default_index
+    default_index = config_sigma.default_index
     yield
-    sigma_config.default_index = default_index
-    for idx in sigma_config.index:
+    config_sigma.default_index = default_index
+    for idx in config_sigma.index:
         if idx == "default":
             continue
-        delattr(sigma_config, idx)
-    sigma_config.restore_default()
+        delattr(config_sigma, idx)
+    config_sigma.restore_default()
 
 
 # Fixtures for testing angles in different units

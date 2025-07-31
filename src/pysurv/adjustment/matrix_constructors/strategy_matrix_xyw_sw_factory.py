@@ -7,10 +7,10 @@
 from pysurv.data.dataset import Dataset
 
 from .._constants import MEMORY_THRESHOLD_GB
-from ._matrix_x_indexer import MatrixXIndexer
-from ._matrix_xyw_sw_strategy import MatrixXYWsWStrategy
-from ._memory_strategy import MemoryStrategy
-from ._speed_strategy import SpeedStrategy
+from .indexer_matrix_x import IndexerMatrixX
+from .memory_strategy import MemoryStrategy
+from .speed_strategy import SpeedStrategy
+from .strategy_matrix_xyw_sw import MatrixXYWsWStrategy
 
 """
 Module for selecting and instantiating matrix construction strategies for least squares adjustment.
@@ -27,7 +27,7 @@ strategies = {"speed": SpeedStrategy, "memory_safe": MemoryStrategy}
 
 def get_strategy(
     dataset: Dataset,
-    matrix_x_indexer: MatrixXIndexer,
+    matrix_x_indexer: IndexerMatrixX,
     default_sigmas_index: str,
     name: str | None = None,
 ) -> MatrixXYWsWStrategy:

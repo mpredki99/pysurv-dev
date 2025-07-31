@@ -19,10 +19,10 @@ from pysurv.warnings._warnings import DefaultIndexWarning
 
 from ._constants import DEFAULT_SIGMAS
 
-__all__ = ["sigma_config"]
+__all__ = ["config_sigma"]
 
 
-class SigmaConfig:
+class ConfigSigma:
     """
     SigmaConfig manages and stores sigma (standard deviation) configurations for survey adjustment.
 
@@ -237,4 +237,4 @@ class SigmaRow:
         return self._data[name]
 
 
-sigma_config = SigmaConfig()
+config_sigma = ConfigSigma()

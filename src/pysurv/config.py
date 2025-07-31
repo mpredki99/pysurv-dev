@@ -4,7 +4,7 @@
 # Licensed under the GNU General Public License v3.0.
 # Full text of the license can be found in the LICENSE and COPYING files in the repository.
 
-from .adjustment.sigma_config import SigmaConfig, sigma_config
+from .adjustment.config_sigma import ConfigSigma, config_sigma
 from .validators._validators import validate_angle_unit
 
 __all__ = ["config"]
@@ -20,7 +20,7 @@ class Config:
 
     def __init__(self) -> None:
         self._angle_unit: str = "grad"
-        self._sigma_config: SigmaConfig = sigma_config
+        self._sigma_config: ConfigSigma = config_sigma
 
     @property
     def angle_unit(self) -> str:
@@ -34,7 +34,7 @@ class Config:
         self._angle_unit = new_angle_unit
 
     @property
-    def sigma_config(self) -> SigmaConfig:
+    def sigma_config(self) -> ConfigSigma:
         """Get the current default sigma configuration used in PySurv."""
         return self._sigma_config
 

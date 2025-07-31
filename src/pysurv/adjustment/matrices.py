@@ -4,22 +4,20 @@
 # Licensed under the GNU General Public License v3.0.
 # Full text of the license can be found in the LICENSE and COPYING files in the repository.
 
+from abc import ABC, abstractmethod
 from inspect import signature
 
 import numpy as np
-import pandas as pd
 
 from pysurv.data.dataset import Dataset
 from pysurv.validators._validators import validate_method
 
 from . import robust
-from .matrix_constructors._matrix_r_constructor import MatrixRConstructor
-from .matrix_constructors._matrix_sx_constructor import MatrixSXConstructor
-from .matrix_constructors._matrix_x_indexer import MatrixXIndexer
-from .matrix_constructors._matrix_xyw_sw_strategy_factory import get_strategy
+from .matrix_constructors.indexer_matrix_x import IndexerMatrixX
+from .matrix_constructors.strategy_matrix_xyw_sw_factory import get_strategy
 
 
-class LSQMatrices:
+class Matrices(ABC):
     """
     Class for constructing and managing matrices required for least squares adjustment.
 
@@ -54,7 +52,7 @@ class LSQMatrices:
             free_tuning_constants, self._free_adjustment
         )
 
-        self._matrix_x_indexer = None
+        self._indexer = None
         self._X = None
         self._Y = None
         self._W = None
@@ -66,9 +64,9 @@ class LSQMatrices:
 
         self._k = None
 
-        self._matrices_xyw_sw_strategy = get_strategy(
+        self._build_xyw_sw_strategy = get_strategy(
             self._dataset,
-            self.matrix_x_indexer,
+            self.indexer,
             default_sigmas_index,
             name=build_strategy,
         )
@@ -140,10 +138,10 @@ class LSQMatrices:
         return self._free_adjustment not in {None, "ordinary"}
 
     @property
-    def matrix_x_indexer(self):
-        if self._matrix_x_indexer is None:
-            self._matrix_x_indexer = MatrixXIndexer(self._dataset)
-        return self._matrix_x_indexer
+    def indexer(self):
+        if self._indexer is None:
+            self._indexer = IndexerMatrixX(self._dataset)
+        return self._indexer
 
     @property
     def matrix_X(self) -> np.ndarray:
@@ -244,72 +242,44 @@ class LSQMatrices:
             if isinstance(value.default, (int, float))
         }
 
-    def _get_hz_first_occurence(self) -> pd.Series:
-        """Set the values of first occurrence of each 'hz' measurement for each station."""
-        hz = self._dataset.measurements.hz.dropna()
-        stn_pk = hz.reset_index()["stn_pk"]
-        first_hz_occurence = stn_pk.drop_duplicates().index
-        return hz.iloc[first_hz_occurence]
-
-    def _update_stations_orientation(self) -> None:
-        """Update the orientation constant for stations based on 'hz' measurements."""
-        self._dataset.stations.append_orientation_constant(
-            self._hz_first_occurence, self._dataset.controls
-        )
-
+    @abstractmethod
     def _build_xyw_matrices(self) -> None:
         """Build the X, Y, and W matrices for least squares adjustment."""
-        self._X, self._Y, self._W = (
-            self._matrices_xyw_sw_strategy.xyw_constructor.build(
-                calculate_weights=self.calculate_weights
-            )
-        )
+        pass
 
+    @abstractmethod
     def _build_inner_constraints_matrix(self) -> None:
         """Build the R matrix and inner constraints list."""
-        inner_constraints_builder = MatrixRConstructor(
-            self._dataset, self.matrix_x_indexer, self.matrix_X.shape[1]
-        )
-        self._R, self._inner_constraints = inner_constraints_builder.build()
+        pass
 
+    @abstractmethod
     def _build_sx_matrix(self):
         """Build the control point corrections matrix (sX)."""
-        matrix_sx_builder = MatrixSXConstructor(
-            self._dataset, self.matrix_x_indexer, self.matrix_X.shape[1]
-        )
-        self._sX = matrix_sx_builder.build()
+        pass
 
+    @abstractmethod
     def _build_sw_matrix(self):
         """Build the control point weights matrix (sW)."""
-        self._sW = self._matrices_xyw_sw_strategy.sw_constructor.build(
-            self.matrix_X.shape[1]
-        )
+        pass
 
+    @abstractmethod
     def _update_weights(
         self, matrix: np.ndarray, v: np.ndarray, func: callable, tuning_constants: dict
     ) -> None:
         """Update proper weights matrix."""
-        diag_idx = np.diag_indices(matrix.shape[0])
-        matrix[diag_idx] *= func(v, **tuning_constants)
+        pass
 
+    @abstractmethod
     def update_xy_matrices(self) -> None:
         """Update the X and Y matrices for least squares adjustment."""
-        if "hz" in self._dataset.measurements.angular_measurement_columns:
-            self._update_stations_orientation()
-        self._X, self._Y, _ = self._matrices_xyw_sw_strategy.xyw_constructor.build(
-            calculate_weights=False
-        )
+        pass
 
+    @abstractmethod
     def update_w_matrix(self, v: np.ndarray) -> None:
         """Update observation weights matrix."""
-        if not self._tuning_constants:
-            return
-        func = getattr(robust, self._method)
-        self._update_weights(self._W, v, func, self._tuning_constants)
+        pass
 
+    @abstractmethod
     def update_sw_matrix(self, v: np.ndarray) -> None:
         """Update control point weights matrix."""
-        if not self._free_tuning_constants:
-            return
-        method = getattr(robust, self._free_adjustment)
-        self._update_weights(self._sW, v, method, self._free_tuning_constants)
+        pass

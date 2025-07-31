@@ -8,28 +8,31 @@ import numpy as np
 
 from pysurv.data.controls import Controls
 
-from .lsq_iterations.lsq_iteration_factory import get_lsq_iteration
-from .lsq_matrices import LSQMatrices
-from .solver_config import solver_config
+from .config_solver import config_solver
+from .iteration_dense import IterationDense
+from .matrices import Matrices
 
 
-class LSQSolver:
+class Solver:
     """Class for solving surveying adjustment task."""
+
     def __init__(
         self,
         controls: Controls,
-        lsq_matrices: LSQMatrices,
-        solve_strategy: str | None = None,
+        lsq_matrices: Matrices,
     ) -> None:
         self._controls = controls
         self._lsq_matrices = lsq_matrices
-        self._solver_config = solver_config
-        self._iteration = get_lsq_iteration(solve_strategy, self._lsq_matrices)
+        self._solver_config = config_solver
+        self._iteration = self._get_lsq_iteration()
         self._approx_coordinates = self._controls.copy()
         self._residual_variances = []
         self._coord_corrections = None
         self._coord_corrections_variances = []
         self._results = None
+
+    def _get_lsq_iteration(self):
+        return IterationDense(self._lsq_matrices)
 
     @property
     def lsq_matrices(self):
@@ -118,6 +121,7 @@ class LSQSolver:
     def solve(self):
         """Run the adjustment process."""
         self.iterate()
+        print(self._iteration.counter)
         return self._check_condition()
 
     def iterate(self):

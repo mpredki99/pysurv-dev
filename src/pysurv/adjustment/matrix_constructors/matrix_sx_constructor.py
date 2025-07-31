@@ -9,15 +9,15 @@ import numpy as np
 from pysurv.data.dataset import Dataset
 
 from .._constants import INVALID_INDEX
-from ._inner_constraints import InnerConstraintsConstructor
-from ._matrix_x_indexer import MatrixXIndexer
+from .indexer_matrix_x import IndexerMatrixX
+from .matrix_base_constructors import InnerConstraintsConstructor
 
 
 class MatrixSXConstructor(InnerConstraintsConstructor):
     """Constructs the control point corrections matrix (sX) for adjustment computations."""
 
     def __init__(
-        self, dataset: Dataset, matrix_x_indexer: MatrixXIndexer, matrix_x_n_col: int
+        self, dataset: Dataset, matrix_x_indexer: IndexerMatrixX, matrix_x_n_col: int
     ) -> None:
         super().__init__(dataset, matrix_x_indexer, matrix_x_n_col)
 

@@ -7,7 +7,7 @@
 import pytest
 
 from pysurv import config
-from pysurv.adjustment.sigma_config import SigmaConfig
+from pysurv.adjustment.config_sigma import ConfigSigma
 from pysurv.exceptions import InvalidAngleUnitError
 
 
@@ -57,7 +57,7 @@ def test_angle_unit_setter_invalid() -> None:
 
 def test_sigma_config_type() -> None:
     """Test that sigma_config is of type SigmaConfig."""
-    assert isinstance(config.sigma_config, SigmaConfig)
+    assert isinstance(config.sigma_config, ConfigSigma)
 
 
 def test_config_string(capsys: pytest.CaptureFixture) -> None:

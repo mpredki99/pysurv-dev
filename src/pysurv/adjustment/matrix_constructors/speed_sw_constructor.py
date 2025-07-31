@@ -10,8 +10,8 @@ import pandas as pd
 from pysurv.data.dataset import Dataset
 
 from .._constants import INVALID_INDEX
-from ._matrix_sw_constructor import MatrixSWConstructor
-from ._matrix_x_indexer import MatrixXIndexer
+from .indexer_matrix_x import IndexerMatrixX
+from .matrix_base_constructors import MatrixSWConstructor
 
 
 class SpeedSWConstructor(MatrixSWConstructor):
@@ -22,7 +22,7 @@ class SpeedSWConstructor(MatrixSWConstructor):
     def __init__(
         self,
         dataset: Dataset,
-        matrix_x_indexer: MatrixXIndexer,
+        matrix_x_indexer: IndexerMatrixX,
         default_sigmas_index: str | None,
     ):
         super().__init__(dataset, matrix_x_indexer, default_sigmas_index)

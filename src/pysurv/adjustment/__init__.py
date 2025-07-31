@@ -5,7 +5,16 @@
 # Full text of the license can be found in the LICENSE and COPYING files in the repository.
 
 from . import observation_equations, robust
-from .lsq_matrices import LSQMatrices
-from .sigma_config import sigma_config
+from .config_sigma import config_sigma
+from .matrices import Matrices
+from .report import Report
+from .solver import Solver
 
-__all__ = ["LSQMatrices", "observation_equations", "robust", "sigma_config"]
+__all__ = [
+    "config_sigma",
+    "Matrices",
+    "Solver",
+    "observation_equations",
+    "Report",
+    "robust",
+]

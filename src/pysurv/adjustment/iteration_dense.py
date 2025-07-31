@@ -7,15 +7,16 @@
 import numpy as np
 from numpy.linalg import pinv
 
-from .._constants import INVALID_INDEX
-from ..lsq_matrices import LSQMatrices
-from .lsq_iteration_strategy import LSQIterationStrategy
+from ._constants import INVALID_INDEX
+from .iteration import Iteration
+from .matrices import Matrices
 
 
-class DenseIteration(LSQIterationStrategy):
+class IterationDense(Iteration):
     """Class that implements LSQ adjustment on numpy dense format stored matrices."""
-    def __init__(self, lsq_matrices: LSQMatrices) -> None:
-        self._lsq_matrices = lsq_matrices
+
+    def __init__(self, lsq_matrices: Matrices) -> None:
+        super().__init__(lsq_matrices)
         self._counter = 0
         self._N_inv = None
         self._L = None
@@ -29,7 +30,7 @@ class DenseIteration(LSQIterationStrategy):
         self._cov_Y = None
         self._cov_r = None
 
-        coordinate_indices = lsq_matrices.matrix_x_indexer.coordinate_indices.values
+        coordinate_indices = lsq_matrices.indexer.coordinate_indices.values
         self._coord_mask = self._get_coord_mask(coordinate_indices)
         self._coord_idx = self._get_coord_idx(coordinate_indices)
 

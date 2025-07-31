@@ -4,11 +4,12 @@
 # Licensed under the GNU General Public License v3.0.
 # Full text of the license can be found in the LICENSE and COPYING files in the repository.
 
-__all__ = ["solver_config"]
+__all__ = ["config_solver"]
 
 
-class SolverConfig:
+class ConfigSolver:
     """Configuration class for solver iteration threshold and maximum iterations."""
+
     def __init__(self) -> None:
         self._threshold = 0.001
         self._max_iter = 100
@@ -44,4 +45,4 @@ class SolverConfig:
             )
 
 
-solver_config = SolverConfig()
+config_solver = ConfigSolver()

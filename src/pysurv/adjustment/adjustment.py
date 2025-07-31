@@ -4,15 +4,16 @@
 # Licensed under the GNU General Public License v3.0.
 # Full text of the license can be found in the LICENSE and COPYING files in the repository.
 
-from .lsq_solver import LSQSolver
 from .report import Report
+from .solver import Solver
 
 
 class Adjustment:
     """Class for running least squares adjustment and show results."""
+
     def __init__(
         self,
-        solver: LSQSolver,
+        solver: Solver,
     ) -> None:
         self.solver = solver
         self._report = None
@@ -23,7 +24,3 @@ class Adjustment:
         if self._report is None:
             self._report = Report(self.solver.results)
         return self._report
-
-    def adjust(self):
-        """Run the adjustment process."""
-        self.solver.solve()

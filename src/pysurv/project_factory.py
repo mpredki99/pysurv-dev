@@ -12,31 +12,25 @@ from pysurv.data.dataset import Dataset
 from .project import Project
 
 
-class ProjectFactory:
-    """
-    Factory class for instantianting the Project from various sources.
-    """
-
-    @staticmethod
-    def from_csv(
-        measurements_file_path: str | os.PathLike,
-        controls_file_path: str | os.PathLike,
-        validation_mode: str | None = "raise",
-        angle_unit: str | None = None,
-        swap_xy: bool = False,
-        delimiter: str | None = None,
-        decimal: str = ".",
-        crs: Any = None,
-    ):
-        """Create a Project from CSV files."""
-        dataset = Dataset.from_csv(
-            measurements_file_path=measurements_file_path,
-            controls_file_path=controls_file_path,
-            validation_mode=validation_mode,
-            angle_unit=angle_unit,
-            swap_xy=swap_xy,
-            delimiter=delimiter,
-            decimal=decimal,
-            crs=crs,
-        )
-        return Project(dataset)
+def from_csv(
+    measurements_file_path: str | os.PathLike,
+    controls_file_path: str | os.PathLike,
+    validation_mode: str | None = "raise",
+    angle_unit: str | None = None,
+    swap_xy: bool = False,
+    delimiter: str | None = None,
+    decimal: str = ".",
+    crs: Any = None,
+):
+    """Create a Project from CSV files."""
+    dataset = Dataset.from_csv(
+        measurements_file_path=measurements_file_path,
+        controls_file_path=controls_file_path,
+        validation_mode=validation_mode,
+        angle_unit=angle_unit,
+        swap_xy=swap_xy,
+        delimiter=delimiter,
+        decimal=decimal,
+        crs=crs,
+    )
+    return Project(dataset)

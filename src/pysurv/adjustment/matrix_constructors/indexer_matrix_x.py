@@ -12,7 +12,7 @@ from pysurv.data.dataset import Dataset
 from .._constants import INVALID_INDEX
 
 
-class MatrixXIndexer:
+class IndexerMatrixX:
     """
     Indexer for mapping control point coordinates and station orientations to matrix X column indices.
 

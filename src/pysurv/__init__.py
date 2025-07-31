@@ -26,12 +26,20 @@
 ************************************************************************************************************************
 """
 
-from . import adjustment, basic, data, exceptions, reader, validators, warnings
+from . import (
+    adjustment,
+    basic,
+    data,
+    exceptions,
+    project_factory,
+    reader,
+    validators,
+    warnings,
+)
 from .adjustment.adjustment import Adjustment
 from .config import config
 from .data.dataset import Dataset
 from .project import Project
-from .project_factory import ProjectFactory
 
 __all__ = [
     "adjustment",
@@ -42,7 +50,7 @@ __all__ = [
     "Dataset",
     "exceptions",
     "Project",
-    "ProjectFactory",
+    "project_factory",
     "reader",
     "validators",
     "warnings",

@@ -5,8 +5,8 @@
 # Full text of the license can be found in the LICENSE and COPYING files in the repository.
 
 from pysurv.adjustment.adjustment import Adjustment
-from pysurv.adjustment.lsq_matrices import LSQMatrices
-from pysurv.adjustment.lsq_solver import LSQSolver
+from pysurv.adjustment.matrices_dense import MatricesDense
+from pysurv.adjustment.solver import Solver
 from pysurv.data.dataset import Dataset
 
 from .config import config
@@ -38,11 +38,10 @@ class Project:
         free_adjustment: str | None = None,
         free_tuning_constants: dict | None = None,
         default_sigmas_index: str | None = None,
-        matrices_build_strategy: str | None = None,
-        solve_strategy: str | None = None,
+        matrices_build_strategy: str | None = None
     ) -> None:
         """Perform least squares adjustment."""
-        lsq_matrices = LSQMatrices(
+        matrices = MatricesDense(
             self._dataset,
             method=method,
             tuning_constants=tuning_constants,
@@ -51,8 +50,6 @@ class Project:
             default_sigmas_index=default_sigmas_index,
             build_strategy=matrices_build_strategy,
         )
-        lsq_solver = LSQSolver(
-            self._dataset.controls, lsq_matrices, solve_strategy=solve_strategy
-        )
-        self._adjustment = Adjustment(lsq_solver)
-        self._adjustment.adjust()
+        solver = Solver(self._dataset.controls, matrices)
+        self._adjustment = Adjustment(solver)
+        return self._adjustment.solver.solve()
