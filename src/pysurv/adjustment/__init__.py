@@ -6,12 +6,14 @@
 
 from . import observation_equations, robust
 from .config_sigma import config_sigma
+from .config_solver import config_solver
 from .matrices import Matrices
 from .report import Report
 from .solver import Solver
 
 __all__ = [
     "config_sigma",
+    "config_solver",
     "Matrices",
     "Solver",
     "observation_equations",

@@ -20,10 +20,11 @@ class Solver:
         self,
         controls: Controls,
         lsq_matrices: Matrices,
+        config_solver_index: str | None = None,
     ) -> None:
         self._controls = controls
         self._lsq_matrices = lsq_matrices
-        self._solver_config = config_solver
+        self._solver_config = self._get_solver_config(config_solver_index)
         self._iteration = self._get_lsq_iteration()
         self._approx_coordinates = self._controls.copy()
         self._residual_variances = []
@@ -33,6 +34,11 @@ class Solver:
 
     def _get_lsq_iteration(self):
         return IterationDense(self._lsq_matrices)
+
+    def _get_solver_config(self, index):
+        if index is None:
+            index = config_solver.default_index
+        return config_solver[index]
 
     @property
     def lsq_matrices(self):

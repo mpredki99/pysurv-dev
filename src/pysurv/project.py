@@ -37,8 +37,9 @@ class Project:
         tuning_constants: dict | None = None,
         free_adjustment: str | None = None,
         free_tuning_constants: dict | None = None,
-        default_sigmas_index: str | None = None,
-        matrices_build_strategy: str | None = None
+        config_sigma_index: str | None = None,
+        matrices_build_strategy: str | None = None,
+        config_solver_index: str | None = None,
     ) -> None:
         """Perform least squares adjustment."""
         matrices = MatricesDense(
@@ -47,9 +48,11 @@ class Project:
             tuning_constants=tuning_constants,
             free_adjustment=free_adjustment,
             free_tuning_constants=free_tuning_constants,
-            default_sigmas_index=default_sigmas_index,
+            config_sigma_index=config_sigma_index,
             build_strategy=matrices_build_strategy,
         )
-        solver = Solver(self._dataset.controls, matrices)
+        solver = Solver(
+            self._dataset.controls, matrices, config_solver_index=config_solver_index
+        )
         self._adjustment = Adjustment(solver)
         return self._adjustment.solver.solve()

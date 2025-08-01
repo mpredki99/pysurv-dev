@@ -55,9 +55,9 @@ def test_angle_unit_setter_invalid() -> None:
         config.angle_unit = "invalid_type"
 
 
-def test_sigma_config_type() -> None:
+def test_config_sigma_type() -> None:
     """Test that sigma_config is of type SigmaConfig."""
-    assert isinstance(config.sigma_config, ConfigSigma)
+    assert isinstance(config.config_sigma, ConfigSigma)
 
 
 def test_config_string(capsys: pytest.CaptureFixture) -> None:

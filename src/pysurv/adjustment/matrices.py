@@ -34,7 +34,7 @@ class Matrices(ABC):
         tuning_constants: dict | None = None,
         free_adjustment: str | None = None,
         free_tuning_constants: dict | None = None,
-        default_sigmas_index: str | None = None,
+        config_sigma_index: str | None = None,
         build_strategy: str | None = None,
     ):
         self._dataset = dataset
@@ -67,7 +67,7 @@ class Matrices(ABC):
         self._build_xyw_sw_strategy = get_strategy(
             self._dataset,
             self.indexer,
-            default_sigmas_index,
+            config_sigma_index,
             name=build_strategy,
         )
 

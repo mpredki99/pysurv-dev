@@ -8,7 +8,9 @@ from pysurv.basic.basic import to_rad
 
 MEMORY_THRESHOLD_GB = 1.0  # Threshold for switching to memory-safe strategy
 
-DEFAULT_SIGMAS = {
+INVALID_INDEX = -1  # Value used for invalid index in matrix constructors
+
+DEFAULT_CONFIG_SIGMA = {
     "stn_sh": 0.01,  # Station height sigma
     "trg_sh": 0.01,  # Target height sigma
     "ssd": 0.01,  # Slope distance sigma
@@ -26,4 +28,7 @@ DEFAULT_SIGMAS = {
     "sz": 0.01,  # Z coordinate sigma
 }
 
-INVALID_INDEX = -1  # Value used for invalid index in matrix constructors
+DEFAULT_CONFIG_SOLVER = {
+    "threshold": 0.001,  # Max value of coordinate increments for breaking the iteration process
+    "max_iter": 100,  # Maximum number of iterations
+}

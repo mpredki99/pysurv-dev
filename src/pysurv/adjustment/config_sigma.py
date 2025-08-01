@@ -5,7 +5,6 @@
 # Full text of the license can be found in the LICENSE and COPYING files in the repository.
 
 from typing import Any
-from warnings import warn
 
 import pandas as pd
 
@@ -15,14 +14,14 @@ from pysurv.validators._models import (
     MeasurementModel,
     validate_sigma,
 )
-from pysurv.warnings._warnings import DefaultIndexWarning
 
-from ._constants import DEFAULT_SIGMAS
+from ._constants import DEFAULT_CONFIG_SIGMA
+from .config_adjustment import ConfigAdjustment, ConfigRow
 
 __all__ = ["config_sigma"]
 
 
-class ConfigSigma:
+class ConfigSigma(ConfigAdjustment):
     """
     SigmaConfig manages and stores sigma (standard deviation) configurations for survey adjustment.
 
@@ -31,107 +30,41 @@ class ConfigSigma:
     and one set is always designated as the default.
     """
 
-    _default = DEFAULT_SIGMAS
-
-    def __init__(self) -> None:
-        self._default_index = "default"
-        self.restore_default()
+    _default = DEFAULT_CONFIG_SIGMA
 
     def __getitem__(self, name: str):
-        """Get sigma row by name."""
-        if name in self.index:
-            return self.__getattribute__(name)
-        elif name in self._dataframe.columns:
-            return self._dataframe[name]
-        else:
-            raise AttributeError(f"Sigma config has not attribute: {name}")
-
-    def __delattr__(self, name: str) -> None:
-        """Delete a sigma row by name, with protection for 'default' index."""
-        if name == "default":
-            raise ValueError("Can not delete 'default' index.")
-        elif name == self._default_index:
-            self._default_index = "default"
-        super().__delattr__(name)
+        try:
+            return super().__getitem__(name)
+        except AttributeError:
+            raise AttributeError(f"Config sigma has no index or column: {name}")
 
     def __str__(self) -> str:
         """Return a string representation of the sigma configuration"""
-        text = "----- SIGMA CONFIG -----" + "\n"
+        text = "----- CONFIG SIGMA -----" + "\n"
         text += f"default index: {self.default_index}" + "\n\n"
         text += self._dataframe.to_string()
         return text
 
-    @property
-    def _dataframe(self) -> pd.DataFrame:
-        """Return a DataFrame of all sigma rows."""
-        data = pd.DataFrame(
-            {
-                idx: row._data
-                for idx, row in self.__dict__.items()
-                if idx != "_default_index"
-            }
+    def _get_kwarg(self, kwargs: dict, key: str, angle_unit: str | None = None):
+        """Get a value from kwargs or default config."""
+        value = kwargs.get(key)
+        return (
+            value if value is not None else self.default.get(key, angle_unit=angle_unit)
         )
-        return data.T
-
-    def _validate_name(self, name: str | None) -> str:
-        """Validate a name for a sigma row."""
-        if name is None:
-            return f"index_{len(self.index) - 1}"
-        elif name.strip().isidentifier():
-            return name.strip()
-        raise ValueError("Attribute name is not valid identifier.")
-
-    @property
-    def index(self) -> pd.Index:
-        """Returns the name index of all sigma rows."""
-        return pd.Index(idx for idx in self.__dict__.keys() if idx != "_default_index")
-
-    @property
-    def columns(self) -> pd.Index:
-        """Returns sigma columns names as pandas index."""
-        return self._dataframe.columns
-
-    @property
-    def default_index(self) -> str:
-        """Return the name of the default sigma row index."""
-        return self._default_index
-
-    @default_index.setter
-    def default_index(self, name: str) -> None:
-        """Set the name of the default sigma row index."""
-        if name not in self.__dict__.keys():
-            raise ValueError(f"Sigma config has no index: {name}")
-        self._default_index = name
-
-    @default_index.deleter
-    def default_index(self):
-        """Reset default_index to 'default' on delete."""
-        warn(
-            "Can not delete default_index property. Setted 'default' instead.",
-            DefaultIndexWarning,
-        )
-        self._default_index = "default"
 
     def restore_default(self) -> None:
-        """Restore the default sigma row to its initial state."""
+        """Restore the default config sigma row to its initial state."""
         self.__setattr__("default", SigmaRow(angle_unit="rad", **self._default))
 
     def append(self, name: str | None = None, angle_unit: str | None = None, **kwargs):
-        """Append a new sigma row to the sigma config."""
-        data = {}
-
-        for key in self._default.keys():
-            input = kwargs.get(key)
-            data[key] = (
-                input
-                if input is not None
-                else self.default.get(key, angle_unit=angle_unit)
-            )
-
+        """Append a new sigma row to the config sigma."""
+        data = {
+            key: self._get_kwarg(kwargs, key, angle_unit=angle_unit)
+            for key in self._default.keys()
+        }
         name = self._validate_name(name)
         if name in self.index:
             raise IndexError(f"Given index name already exist: {name}")
-
         data["name"] = name
 
         self.__setattr__(name, SigmaRow(angle_unit=angle_unit, **data))
@@ -155,7 +88,7 @@ class ConfigSigma:
         return data.loc[index]
 
 
-class SigmaRow:
+class SigmaRow(ConfigRow):
     """
     SigmaRow represents a single row of sigma (standard deviation) configuration values.
     """
@@ -167,27 +100,6 @@ class SigmaRow:
             data[key] = self._validate_attr(key, value, angle_unit=angle_unit)
 
         self._data = pd.Series(data, name=name)
-
-    def __setattr__(self, name: str, value: Any) -> None:
-        """Set _data (row storing attribute) or set row sigma values with validation."""
-        if name == "_data":
-            super().__setattr__(name, value)
-        else:
-            self._data[name] = self._validate_attr(name, value)
-
-    def __getattr__(self, name: str):
-        """Get sigma value from the sigma row."""
-        if name == "_data":
-            return super().__getattr__(name)
-        return self._data.get(name)
-
-    def __getitem__(self, name: str) -> float:
-        """Get sigma value by name."""
-        return self._data[name]
-
-    def __str__(self) -> str:
-        """Return string representation of the sigma row."""
-        return self._data.__str__()
 
     def _validate_attr(
         self, name: str, value: float, angle_unit: str | None = "rad"

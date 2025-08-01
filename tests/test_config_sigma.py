@@ -12,7 +12,7 @@ import pytest
 
 from pysurv import config
 from pysurv.adjustment import config_sigma
-from pysurv.adjustment._constants import DEFAULT_SIGMAS
+from pysurv.adjustment._constants import DEFAULT_CONFIG_SIGMA
 from pysurv.warnings import DefaultIndexWarning
 
 
@@ -39,17 +39,17 @@ def sigma_columns() -> tuple[str]:
 
 def test_singleton() -> None:
     """Test that sigma_config is a singleton."""
-    sigma_config_1 = config_sigma
-    sigma_config_2 = config.sigma_config
+    config_sigma_1 = config_sigma
+    config_sigma_2 = config.config_sigma
 
-    assert sigma_config_1 is sigma_config_2
+    assert config_sigma_1 is config_sigma_2
 
 
 def test_sigma_config_string(capsys: pytest.CaptureFixture) -> None:
     """Test string representation of sigma_config contains 'SIGMA CONFIG'."""
     print(config_sigma)
     captured = capsys.readouterr()
-    assert "SIGMA CONFIG" in captured.out
+    assert "CONFIG SIGMA" in captured.out
 
 
 def test_sigma_config_row_string(capsys: pytest.CaptureFixture) -> None:
@@ -405,7 +405,7 @@ def test_restore_default(sigma_columns: tuple[str]) -> None:
     config_sigma.restore_default()
 
     for col in sigma_columns:
-        assert config_sigma.default[col] == DEFAULT_SIGMAS[col]
+        assert config_sigma.default[col] == DEFAULT_CONFIG_SIGMA[col]
 
 
 def test_get(angle_units: tuple[str]) -> None:

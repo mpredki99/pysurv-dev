@@ -5,6 +5,7 @@
 # Full text of the license can be found in the LICENSE and COPYING files in the repository.
 
 from .adjustment.config_sigma import ConfigSigma, config_sigma
+from .adjustment.config_solver import ConfigSolver, config_solver
 from .validators._validators import validate_angle_unit
 
 __all__ = ["config"]
@@ -20,7 +21,8 @@ class Config:
 
     def __init__(self) -> None:
         self._angle_unit: str = "grad"
-        self._sigma_config: ConfigSigma = config_sigma
+        self._config_sigma: ConfigSigma = config_sigma
+        self._config_solver: ConfigSolver = config_solver
 
     @property
     def angle_unit(self) -> str:
@@ -34,9 +36,14 @@ class Config:
         self._angle_unit = new_angle_unit
 
     @property
-    def sigma_config(self) -> ConfigSigma:
-        """Get the current default sigma configuration used in PySurv."""
-        return self._sigma_config
+    def config_sigma(self) -> ConfigSigma:
+        """Get the config sigma object ."""
+        return self._config_sigma
+
+    @property
+    def config_solver(self) -> ConfigSolver:
+        """Get the config solver object ."""
+        return self._config_solver
 
     def __str__(self) -> str:
         """Return a string representation of the current global configuration."""
