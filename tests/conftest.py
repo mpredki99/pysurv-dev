@@ -36,8 +36,8 @@ def reset_config_sigma_state():
             continue
         delattr(config_sigma, idx)
     config_sigma.restore_default()
-    
-    
+
+
 @pytest.fixture(autouse=True)
 def reset_config_solver_state():
     """Reset sigma_config to its default state after each test."""
@@ -585,3 +585,51 @@ def control_file_missing_mandatory_columns(
     file_path: str = os.path.join(temp_dir, "controls_missing_columns.csv")
     control_data_missing_mandatory_columns.to_csv(file_path, index=False)
     return file_path
+
+
+# Test objects
+@pytest.fixture
+def FixedMatrices():
+    """Fixture providing a test Matrices subclass with fixed matrices."""
+    from pysurv.adjustment.matrices import Matrices
+    from pysurv.adjustment.method_manager_adjustment import AdjustmentMethodManager
+
+    class TestFixedMatrices(Matrices):
+        def __init__(self, methods: AdjustmentMethodManager):
+            self._X = None
+            self._Y = None
+            self._W = None
+            self._sW = None
+
+            self._R = None
+            self._sX = None
+
+            self._k = None
+
+            self._methods = methods
+            self._methods._inject_matrices(self)
+
+        def _build_xyw_matrices(self) -> None:
+            self._X = np.zeros((30, 10))
+            self._Y = np.zeros((30, 1))
+            self._W = np.eye(30)
+
+        def _build_inner_constraints_matrix(self) -> None:
+            self._R = np.zeros((4, 10))
+
+        def _build_sx_matrix(self) -> None:
+            self._W = np.eye(10)
+
+        def _build_sw_matrix(self) -> None:
+            self._W = np.eye(10)
+
+        def update_xy_matrices(self) -> None:
+            pass
+
+        def update_w_matrix(self, v: np.ndarray) -> None:
+            pass
+
+        def update_sw_matrix(self, v: np.ndarray) -> None:
+            pass
+
+    return TestFixedMatrices

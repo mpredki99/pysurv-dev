@@ -1,5 +1,4 @@
 import numpy as np
-import pandas as pd
 
 from . import robust
 from .matrices import Matrices
@@ -12,19 +11,6 @@ class MatricesDense(Matrices):
         """Build the X, Y, and W matrices for least squares adjustment."""
         self._X, self._Y, self._W = self._build_xyw_sw_strategy.xyw_constructor.build(
             calculate_weights=self.calculate_weights
-        )
-
-    def _get_hz_first_occurence(self) -> pd.Series:
-        """Set the values of first occurrence of each 'hz' measurement for each station."""
-        hz = self._dataset.measurements.hz.dropna()
-        stn_pk = hz.reset_index()["stn_pk"]
-        first_hz_occurence = stn_pk.drop_duplicates().index
-        return hz.iloc[first_hz_occurence]
-
-    def _update_stations_orientation(self) -> None:
-        """Update the orientation constant for stations based on 'hz' measurements."""
-        self._dataset.stations.append_orientation_constant(
-            self._hz_first_occurence, self._dataset.controls
         )
 
     def _build_inner_constraints_matrix(self) -> None:
@@ -64,14 +50,16 @@ class MatricesDense(Matrices):
 
     def update_w_matrix(self, v: np.ndarray) -> None:
         """Update observation weights matrix."""
-        if not self._tuning_constants:
+        if not self._methods.obs_tuning_constants:
             return
-        func = getattr(robust, self._method)
-        self._update_weights(self._W, v, func, self._tuning_constants)
+        func = getattr(robust, self._methods.observations)
+        self._update_weights(self._W, v, func, self._methods.obs_tuning_constants)
 
     def update_sw_matrix(self, v: np.ndarray) -> None:
         """Update control point weights matrix."""
-        if not self._free_tuning_constants:
+        if not self._methods.free_adj_tuning_constants:
             return
-        method = getattr(robust, self._free_adjustment)
-        self._update_weights(self._sW, v, method, self._free_tuning_constants)
+        method = getattr(robust, self._methods.free_adjustment)
+        self._update_weights(
+            self._sW, v, method, self._methods.free_adj_tuning_constants
+        )

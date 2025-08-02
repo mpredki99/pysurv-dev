@@ -132,7 +132,7 @@ class Solver:
 
     def iterate(self):
         """Perform a single iteration of the adjustment."""
-        if self._iteration.counter > 1:
+        if self._iteration.counter > 0:
             self.update_matrices()
         self._iteration.run()
         self._update_coord_corrections()
@@ -146,9 +146,9 @@ class Solver:
 
     def update_weight_matrices(self):
         """Update weight matrices if tuning constants are present."""
-        if self._lsq_matrices.tuning_constants:
+        if self._lsq_matrices.methods.obs_tuning_constants:
             self.update_w_matrix()
-        if self._lsq_matrices.free_tuning_constants:
+        if self._lsq_matrices.methods.free_adj_tuning_constants:
             self.update_sw_matrix()
 
     def update_w_matrix(self):
@@ -157,9 +157,9 @@ class Solver:
         obs_sv = self._iteration.covariance_r.diagonal()
         v = self._normalize_v(obs_v, obs_sv)
 
-        if self._lsq_matrices.method == "cra":
+        if self._lsq_matrices.methods.observations == "cra":
             sigma_sq = self._iteration.residual_variance
-            self._lsq_matrices.tuning_constants["sigma_sq"] = sigma_sq
+            self._lsq_matrices.methods.obs_tuning_constants["sigma_sq"] = sigma_sq
 
         self._lsq_matrices.update_w_matrix(v)
 
@@ -169,9 +169,11 @@ class Solver:
         ctrl_sv = self._iteration.covariance_X.diagonal()
         v = self._normalize_v(ctrl_v, ctrl_sv)
 
-        if self._lsq_matrices.free_adjustment == "cra":
+        if self._lsq_matrices.methods.free_adjustment == "cra":
             coord_sigma_sq = self._coord_corrections_variances[-1]
-            self._lsq_matrices.free_tuning_constants["sigma_sq"] = coord_sigma_sq
+            self._lsq_matrices.methods.free_adj_tuning_constants["sigma_sq"] = (
+                coord_sigma_sq
+            )
 
         self._lsq_matrices.update_sw_matrix(v)
 

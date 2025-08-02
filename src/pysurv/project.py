@@ -6,6 +6,7 @@
 
 from pysurv.adjustment.adjustment import Adjustment
 from pysurv.adjustment.matrices_dense import MatricesDense
+from pysurv.adjustment.method_manager_robust import RobustMethodManager
 from pysurv.adjustment.solver import Solver
 from pysurv.data.dataset import Dataset
 
@@ -42,12 +43,15 @@ class Project:
         config_solver_index: str | None = None,
     ) -> None:
         """Perform least squares adjustment."""
+        method_manager = RobustMethodManager(
+            observations=method,
+            obs_tuning_constants=tuning_constants,
+            free_adjustment=free_adjustment,
+            free_adj_tuning_constants=free_tuning_constants,
+        )
         matrices = MatricesDense(
             self._dataset,
-            method=method,
-            tuning_constants=tuning_constants,
-            free_adjustment=free_adjustment,
-            free_tuning_constants=free_tuning_constants,
+            method_manager,
             config_sigma_index=config_sigma_index,
             build_strategy=matrices_build_strategy,
         )

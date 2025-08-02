@@ -5,21 +5,20 @@
 # Full text of the license can be found in the LICENSE and COPYING files in the repository.
 
 from abc import ABC, abstractmethod
-from inspect import signature
 
 import numpy as np
+import pandas as pd
 
 from pysurv.data.dataset import Dataset
-from pysurv.validators._validators import validate_method
 
-from . import robust
 from .matrix_constructors.indexer_matrix_x import IndexerMatrixX
 from .matrix_constructors.strategy_matrix_xyw_sw_factory import get_strategy
+from .method_manager_adjustment import AdjustmentMethodManager
 
 
 class Matrices(ABC):
     """
-    Class for constructing and managing matrices required for least squares adjustment.
+    Base class for constructing and managing matrices required for least squares adjustment.
 
     This class perform lazy builds and stores the design matrix (X), observation vector (Y),
     weight matrix for observations (W), weight matrix for coordinates (sW),
@@ -30,29 +29,13 @@ class Matrices(ABC):
     def __init__(
         self,
         dataset: Dataset,
-        method: str = "weighted",
-        tuning_constants: dict | None = None,
-        free_adjustment: str | None = None,
-        free_tuning_constants: dict | None = None,
+        methods: AdjustmentMethodManager,
         config_sigma_index: str | None = None,
         build_strategy: str | None = None,
     ):
         self._dataset = dataset
 
-        self._method = validate_method(method)
-        self._tuning_constants = self._get_tuning_constants(
-            tuning_constants, self._method
-        )
-
-        if free_adjustment is None:
-            self._free_adjustment = None
-        else:
-            self._free_adjustment = validate_method(free_adjustment)
-        self._free_tuning_constants = self._get_tuning_constants(
-            free_tuning_constants, self._free_adjustment
-        )
-
-        self._indexer = None
+        self._indexer = self._get_matrix_x_indexer()
         self._X = None
         self._Y = None
         self._W = None
@@ -66,81 +49,35 @@ class Matrices(ABC):
 
         self._build_xyw_sw_strategy = get_strategy(
             self._dataset,
-            self.indexer,
+            self._indexer,
             config_sigma_index,
             name=build_strategy,
         )
 
-        self._hz_first_occurence = self._get_hz_first_occurence()
+        self._hz_first_occurence = None
         if "hz" in self._dataset.measurements.angular_measurement_columns:
+            self._hz_first_occurence = self._get_hz_first_occurence()
             self._update_stations_orientation()
 
-    @property
-    def method(self) -> str:
-        """Return method used for weight matrix reweight."""
-        return self._method
-
-    @method.setter
-    def method(self, value: str) -> None:
-        """Set method used for weight matrix reweight."""
-        self._method = validate_method(value)
-        self._tuning_constants = self._get_tuning_constants(
-            self._tuning_constants, self._method
-        )
+        self._methods = methods
+        self._methods._inject_matrices(self)
 
     @property
-    def tuning_constants(self) -> dict:
-        """Return tuning constants used for weight matrix reweight."""
-        return self._tuning_constants
-
-    @tuning_constants.setter
-    def tuning_constants(self, value: dict | None) -> None:
-        """Set tuning constants used for weight matrix reweight."""
-        self._tuning_constants = self._get_tuning_constants(value, self._method)
-
-    @property
-    def free_adjustment(self) -> str:
-        """Return method used for inner constraint matrix reweight."""
-        return self._free_adjustment
-
-    @free_adjustment.setter
-    def free_adjustment(self, value: str | None) -> None:
-        """Set method used for inner constraint matrix reweight."""
-        if value is None:
-            self._free_adjustment = None
-        else:
-            self._free_adjustment = validate_method(value)
-        self._free_tuning_constants = self._get_tuning_constants(
-            self._free_tuning_constants, self._free_adjustment
-        )
-        self._k = self._get_degrees_of_freedom()
-
-    @property
-    def free_tuning_constants(self) -> dict:
-        """Return tuning constants used for inner constraint matrix reweight."""
-        return self._free_tuning_constants
-
-    @free_tuning_constants.setter
-    def free_tuning_constants(self, value: dict | None) -> None:
-        """Return tuning constants used for inner constraint matrix reweight."""
-        self._free_tuning_constants = self._get_tuning_constants(
-            value, self._free_adjustment
-        )
+    def methods(self):
+        return self._methods
 
     @property
     def calculate_weights(self) -> bool:
         """Return whether weight matrix is calculated for the adjustment."""
-        return self._method != "ordinary"
+        return self._methods.observations != "ordinary"
 
     @property
     def apply_inner_constraints(self) -> bool:
         """Return whether inner constraints are applied for the adjustment."""
-        return self._free_adjustment not in {None, "ordinary"}
+        return self._methods.free_adjustment not in {None, "ordinary"}
 
     @property
     def indexer(self):
-        if self._indexer is None:
-            self._indexer = IndexerMatrixX(self._dataset)
         return self._indexer
 
     @property
@@ -169,8 +106,10 @@ class Matrices(ABC):
         """Return the list of inner constraints used in the adjustment."""
         if not self.apply_inner_constraints:
             return
+
         if self._inner_constraints is None:
             self._build_inner_constraints_matrix()
+
         return self._inner_constraints
 
     @property
@@ -178,21 +117,23 @@ class Matrices(ABC):
         """Return the inner constraints matrix (R) for least squares adjustment."""
         if not self.apply_inner_constraints:
             return
+
         if self._R is None:
             self._build_inner_constraints_matrix()
+
         return self._R
 
     @property
     def matrix_sX(self) -> np.ndarray:
         """Return the control point corrections matrix (sX) for least squares adjustment."""
-        if self._free_adjustment is None and self._sX is None:
+        if self._methods.free_adjustment is None and self._sX is None:
             self._build_sx_matrix()
         return self._sX
 
     @property
     def matrix_sW(self) -> np.ndarray:
         """Return the the control point weight matrix (sW) for least squares adjustment."""
-        if self._free_adjustment != "ordinary" and self._sW is None:
+        if self._methods.free_adjustment != "ordinary" and self._sW is None:
             self._build_sw_matrix()
         return self._sW
 
@@ -200,8 +141,14 @@ class Matrices(ABC):
     def degrees_of_freedom(self) -> int:
         """Return degrees of freedom of the system."""
         if self._k is None:
-            self._k = self._get_degrees_of_freedom()
+            self._refresh_degrees_of_freedom()
         return self._k
+
+    def _get_matrix_x_indexer(self):
+        return IndexerMatrixX(self._dataset)
+
+    def _refresh_degrees_of_freedom(self):
+        self._k = self._get_degrees_of_freedom()
 
     def _get_degrees_of_freedom(self) -> int:
         """Calculate and return degrees of freedom of the system."""
@@ -209,38 +156,17 @@ class Matrices(ABC):
         n_measurements, n_unknowns = self.matrix_X.shape
         return n_measurements + n_constraints - n_unknowns
 
-    def _get_tuning_constants(
-        self, tuning_constants: dict | None, method: str | None
-    ) -> dict | None:
-        """Determine and return tuning constants used for updating weights."""
-        if method in {None, "ordinary", "weighted"}:
-            return
+    def _get_hz_first_occurence(self) -> pd.Series:
+        """Set the values of first occurrence of each 'hz' measurement for each station."""
+        hz = self._dataset.measurements.hz.dropna()
+        first_hz_occurence = hz.reset_index().drop_duplicates("stn_pk").index
+        return hz.iloc[first_hz_occurence]
 
-        func = getattr(robust, method)
-        default_kwargs = self._get_kwargs(func)
-
-        if not tuning_constants:
-            tuning_constants = default_kwargs
-
-        tuning_constants = {
-            key: tuning_constants.get(key, default_kwargs[key])
-            for key in default_kwargs.keys()
-        }
-
-        if method == "cra":
-            tuning_constants["sigma_sq"] = 1
-        elif method == "t":
-            tuning_constants["k"] = self.degrees_of_freedom
-        return tuning_constants
-
-    def _get_kwargs(self, func) -> dict:
-        """Get kwargs with default values of robust method used for updating weights."""
-        sig = signature(func)
-        return {
-            key: value.default
-            for key, value in sig.parameters.items()
-            if isinstance(value.default, (int, float))
-        }
+    def _update_stations_orientation(self) -> None:
+        """Update the orientation constant for stations based on 'hz' measurements."""
+        self._dataset.stations.append_orientation_constant(
+            self._hz_first_occurence, self._dataset.controls
+        )
 
     @abstractmethod
     def _build_xyw_matrices(self) -> None:
@@ -260,13 +186,6 @@ class Matrices(ABC):
     @abstractmethod
     def _build_sw_matrix(self):
         """Build the control point weights matrix (sW)."""
-        pass
-
-    @abstractmethod
-    def _update_weights(
-        self, matrix: np.ndarray, v: np.ndarray, func: callable, tuning_constants: dict
-    ) -> None:
-        """Update proper weights matrix."""
         pass
 
     @abstractmethod
