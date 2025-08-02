@@ -4,12 +4,7 @@
 # Licensed under the GNU General Public License v3.0.
 # Full text of the license can be found in the LICENSE and COPYING files in the repository.
 
-from typing import Any
-from warnings import warn
-
 import pandas as pd
-
-from pysurv.warnings._warnings import DefaultIndexWarning
 
 from ._constants import DEFAULT_CONFIG_SOLVER
 from .config_adjustment import ConfigAdjustment, ConfigRow
@@ -83,20 +78,28 @@ class ConfigSolverRow(ConfigRow):
     def _validate_threshold(self, value: float) -> float:
         """Validate the iteration threshold."""
         try:
-            return float(value)
+            value = float(value)
         except ValueError:
             raise ValueError(
                 f"Iteration threshold shold be float or possible to convert: {value}"
             )
+        return self.validate_positive(value, "Iteration threshold")
 
     def _validate_max_iter(self, value: int) -> int:
         """Validate the maximum number of iterations."""
         try:
-            return int(value)
+            value = int(value)
         except ValueError:
             raise ValueError(
                 f"Max iteration number shold be int or possible to convert: {value}"
             )
+        return self.validate_positive(value, "Max iteration number")
+            
+    def validate_positive(self, value: float | int, message_prefix: str) -> float | int:
+        """Validate that the value is positive."""
+        if value <= 0:
+            raise ValueError(f"{message_prefix} value must be positive: {value}")
+        return value
 
 
 config_solver = ConfigSolver()
