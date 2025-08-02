@@ -94,7 +94,7 @@ class ConfigSolverRow(ConfigRow):
                 f"Max iteration number shold be int or possible to convert: {value}"
             )
         return self.validate_positive(value, "Max iteration number")
-            
+
     def validate_positive(self, value: float | int, message_prefix: str) -> float | int:
         """Validate that the value is positive."""
         if value <= 0:
