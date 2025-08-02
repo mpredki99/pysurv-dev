@@ -7,18 +7,18 @@
 from . import observation_equations, robust
 from .config_sigma import config_sigma
 from .config_solver import config_solver
-from .matrices import Matrices
-from .method_manager_robust import RobustMethodManager
+from .matrices_dense import MatricesDense
+from .method_manager_robust import MethodManagerRobust
 from .report import Report
 from .solver import Solver
 
 __all__ = [
     "config_sigma",
     "config_solver",
-    "Matrices",
+    "MatricesDense",
+    "MethodManagerRobust",
     "observation_equations",
     "Report",
     "robust",
-    "RobustMethodManager",
     "Solver",
 ]

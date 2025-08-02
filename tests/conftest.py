@@ -592,10 +592,10 @@ def control_file_missing_mandatory_columns(
 def FixedMatrices():
     """Fixture providing a test Matrices subclass with fixed matrices."""
     from pysurv.adjustment.matrices import Matrices
-    from pysurv.adjustment.method_manager_adjustment import AdjustmentMethodManager
+    from pysurv.adjustment.method_manager_adjustment import MethodManagerAdjustment
 
     class TestFixedMatrices(Matrices):
-        def __init__(self, methods: AdjustmentMethodManager):
+        def __init__(self, methods: MethodManagerAdjustment):
             self._X = None
             self._Y = None
             self._W = None

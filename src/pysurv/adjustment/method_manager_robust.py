@@ -1,10 +1,10 @@
 from inspect import signature
 
 from . import robust
-from .method_manager_adjustment import AdjustmentMethodManager
+from .method_manager_adjustment import MethodManagerAdjustment
 
 
-class RobustMethodManager(AdjustmentMethodManager):
+class MethodManagerRobust(MethodManagerAdjustment):
     def _get_tuning_constants(
         self, tuning_constants: dict | None, method: str | None
     ) -> dict | None:

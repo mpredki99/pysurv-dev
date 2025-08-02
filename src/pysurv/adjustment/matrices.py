@@ -13,7 +13,7 @@ from pysurv.data.dataset import Dataset
 
 from .matrix_constructors.indexer_matrix_x import IndexerMatrixX
 from .matrix_constructors.strategy_matrix_xyw_sw_factory import get_strategy
-from .method_manager_adjustment import AdjustmentMethodManager
+from .method_manager_adjustment import MethodManagerAdjustment
 
 
 class Matrices(ABC):
@@ -29,7 +29,7 @@ class Matrices(ABC):
     def __init__(
         self,
         dataset: Dataset,
-        methods: AdjustmentMethodManager,
+        methods: MethodManagerAdjustment,
         config_sigma_index: str | None = None,
         build_strategy: str | None = None,
     ):
@@ -47,7 +47,7 @@ class Matrices(ABC):
 
         self._k = None
 
-        self._build_xyw_sw_strategy = get_strategy(
+        self._xyw_sw_init_strategy = get_strategy(
             self._dataset,
             self._indexer,
             config_sigma_index,
@@ -109,7 +109,6 @@ class Matrices(ABC):
 
         if self._inner_constraints is None:
             self._build_inner_constraints_matrix()
-
         return self._inner_constraints
 
     @property
@@ -120,7 +119,6 @@ class Matrices(ABC):
 
         if self._R is None:
             self._build_inner_constraints_matrix()
-
         return self._R
 
     @property
@@ -145,9 +143,11 @@ class Matrices(ABC):
         return self._k
 
     def _get_matrix_x_indexer(self):
+        """Return IndexerMatrixX object."""
         return IndexerMatrixX(self._dataset)
 
     def _refresh_degrees_of_freedom(self):
+        """Set new value of degrees of freedom"""
         self._k = self._get_degrees_of_freedom()
 
     def _get_degrees_of_freedom(self) -> int:
