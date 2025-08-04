@@ -589,12 +589,66 @@ def control_file_missing_mandatory_columns(
 
 # Test objects
 @pytest.fixture
-def FixedMatrices():
-    """Fixture providing a test Matrices subclass with fixed matrices."""
+def mock_dataset_size():
+    """Fixture providing mock dataset with customizable size."""
+    from unittest.mock import Mock
+
+    def create_mock_dataset_size(size=pd.Series([0, 0, 0])):
+
+        dataset = Mock()
+        dataset.controls.memory_usage = Mock(return_value=size)
+        dataset.stations.memory_usage = Mock(return_value=size)
+        dataset.measurements.memory_usage = Mock(return_value=size)
+        dataset.measurements.angular_measurement_columns = []
+
+        return dataset
+
+    return create_mock_dataset_size
+
+
+@pytest.fixture
+def adjustment_test_dataset():
+    """Fixture providing sample dataset for performing adjustment."""
+    from pysurv import Dataset
+
+    return Dataset.from_csv("tests/measurements.csv", "tests/controls.csv")
+
+
+@pytest.fixture
+def MethodManagerTester():
+    """Fixture providing a test MethodManagerAdjustment subclass."""
+    from pysurv.adjustment.method_manager_adjustment import MethodManagerAdjustment
+
+    class CreateMethodManagerTester(MethodManagerAdjustment):
+        def __init__(
+            self,
+            observations: str = "weighted",
+            obs_tuning_constants: dict | None = None,
+            free_adjustment: str | None = None,
+            free_adj_tuning_constants: dict | None = None,
+        ) -> None:
+            self._matrices = None
+
+            self._observations = observations
+            self._obs_tuning_constants = obs_tuning_constants
+            self._free_adjustment = free_adjustment
+            self._free_adj_tuning_constants = free_adj_tuning_constants
+
+        def _get_tuning_constants(
+            self, tuning_constants: dict | None, method: str | None
+        ) -> None:
+            pass
+
+    return CreateMethodManagerTester
+
+
+@pytest.fixture
+def MatricesTester():
+    """Fixture providing a test Matrices subclass."""
     from pysurv.adjustment.matrices import Matrices
     from pysurv.adjustment.method_manager_adjustment import MethodManagerAdjustment
 
-    class TestFixedMatrices(Matrices):
+    class CreateMatricesTester(Matrices):
         def __init__(self, methods: MethodManagerAdjustment):
             self._X = None
             self._Y = None
@@ -632,4 +686,4 @@ def FixedMatrices():
         def update_sw_matrix(self, v: np.ndarray) -> None:
             pass
 
-    return TestFixedMatrices
+    return CreateMatricesTester
