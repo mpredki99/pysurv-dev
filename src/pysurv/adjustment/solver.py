@@ -24,21 +24,14 @@ class Solver:
     ) -> None:
         self._controls = controls
         self._lsq_matrices = lsq_matrices
-        self._solver_config = self._get_solver_config(config_solver_index)
+        self._solver_config = self._get_config_solver(config_solver_index)
         self._iteration = self._get_lsq_iteration()
         self._approx_coordinates = self._controls.copy()
         self._residual_variances = []
         self._coord_corrections = None
         self._coord_corrections_variances = []
         self._results = None
-
-    def _get_lsq_iteration(self):
-        return IterationDense(self._lsq_matrices)
-
-    def _get_solver_config(self, index):
-        if index is None:
-            index = config_solver.default_index
-        return config_solver[index]
+        self._n_sigma_coords = self._get_n_sigma_coords()
 
     @property
     def lsq_matrices(self):
@@ -53,9 +46,26 @@ class Solver:
     @property
     def results(self):
         """Prepare if needed and return adjustment results."""
-        if self._results is None:
+        if self._results is None and self.iteration.counter > 0:
             self._prepare_adjustment_results()
         return self._results
+    
+    def _get_lsq_iteration(self):
+        """Returns iteration object."""
+        return IterationDense(self._lsq_matrices)
+
+    def _get_config_solver(self, index: str | None):
+        """Returns config_solver row."""
+        if index is None:
+            index = config_solver.default_index
+        return config_solver[index]
+    
+    def _get_n_sigma_coords(self):
+        """Calculate number of points excluding that with 0 weight."""
+        sW = self._lsq_matrices.matrix_sW
+        if sW is None:
+            return
+        return len(sW.diagonal()[sW.diagonal() > 0])
 
     def _check_condition(self):
         """Check if iteration should stop or continue."""
@@ -85,7 +95,7 @@ class Solver:
         if point_weights is not None:
             return np.divide(
                 (self._coord_corrections**2 * point_weights).sum(),
-                self._coord_corrections.shape[0],
+                self._n_sigma_coords,
             )
         else:
             return np.divide(
@@ -105,14 +115,23 @@ class Solver:
 
         self._residual_sigmas = np.sqrt(self._residual_variances)
         self._coord_corrections_sigmas = np.sqrt(self._coord_corrections_variances)
+        
+        if self.lsq_matrices.methods.free_adjustment == 'ordinary':
+            inner_constraints = "pseudoinverse"
+        else:
+            inner_constraints = self.lsq_matrices.inner_constraints
 
         self._results = {
             "n_iter": self._iteration._counter,
+            "observations": self.lsq_matrices.methods.observations,
+            "obs_tuning_constants": self.lsq_matrices.methods.obs_tuning_constants,
+            "free_adjustment": self.lsq_matrices.methods.free_adjustment,
+            "free_adj_tuning_constants": self.lsq_matrices.methods.free_adj_tuning_constants,
             "n_measurements": n_measurements,
             "n_coord_corrections": self._coord_corrections.shape[0],
             "n_unknowns": n_unknowns,
             "degrees_of_freedom": self._lsq_matrices.degrees_of_freedom,
-            "inner_constraints": self._lsq_matrices.inner_constraints,
+            "inner_constraints": inner_constraints,
             "residual_sigmas": self._residual_sigmas,
             "coord_correction_sigmas": self._coord_corrections_sigmas,
             "approximate_coordinates": self._approx_coordinates,
@@ -123,11 +142,12 @@ class Solver:
             "cov_Y": self._iteration.covariance_Y,
             "cov_r": self._iteration.covariance_r,
         }
+        
+        
 
     def solve(self):
         """Run the adjustment process."""
         self.iterate()
-        print(self._iteration.counter)
         return self._check_condition()
 
     def iterate(self):
