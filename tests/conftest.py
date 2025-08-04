@@ -698,3 +698,9 @@ def adjustment_test_matrices(
     """Return matrices object created based on test dataset."""
     methods = MethodManagerTester()
     return MatricesDense(adjustment_test_dataset, methods)
+
+
+@pytest.fixture
+def strategies():
+    """Returns names of the matrices construct strategies."""
+    return ['speed', 'memory_safe']

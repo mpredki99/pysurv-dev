@@ -27,105 +27,111 @@ def test_lazy_loading(
 
 
 def test_matrices_creation_with_ordinary_obs_method(
-    MethodManagerTester: MethodManagerAdjustment, adjustment_test_dataset: Dataset
+    MethodManagerTester: MethodManagerAdjustment, adjustment_test_dataset: Dataset, strategies: list,
 ):
     """Test that proper matrices are created with ordinary observations method."""
     methods = MethodManagerTester(observations="ordinary", free_adjustment=None)
-    matrices = MatricesDense(adjustment_test_dataset, methods)
+    for strategy in strategies:
+        matrices = MatricesDense(adjustment_test_dataset, methods, build_strategy=strategy)
 
-    assert matrices.matrix_X is not None
-    assert matrices.matrix_Y is not None
-    assert matrices.matrix_W is None
-    assert matrices.matrix_sW is not None
-    assert matrices.inner_constraints is None
-    assert matrices.matrix_R is None
-    assert matrices.matrix_sX is not None
-    assert matrices.degrees_of_freedom is not None
+        assert matrices.matrix_X is not None
+        assert matrices.matrix_Y is not None
+        assert matrices.matrix_W is None
+        assert matrices.matrix_sW is not None
+        assert matrices.inner_constraints is None
+        assert matrices.matrix_R is None
+        assert matrices.matrix_sX is not None
+        assert matrices.degrees_of_freedom is not None
 
 
 def test_matrices_creation_with_weighted_obs_method(
-    MethodManagerTester: MethodManagerAdjustment, adjustment_test_dataset: Dataset
+    MethodManagerTester: MethodManagerAdjustment, adjustment_test_dataset: Dataset, strategies: list
 ):
     """Test that proper matrices are created with weighted observations method."""
     methods = MethodManagerTester(observations="weighted", free_adjustment=None)
-    matrices = MatricesDense(adjustment_test_dataset, methods)
+    for strategy in strategies:
+        matrices = MatricesDense(adjustment_test_dataset, methods, build_strategy=strategy)
 
-    assert matrices.matrix_X is not None
-    assert matrices.matrix_Y is not None
-    assert matrices.matrix_W is not None
-    assert matrices.matrix_sW is not None
-    assert matrices.inner_constraints is None
-    assert matrices.matrix_R is None
-    assert matrices.matrix_sX is not None
-    assert matrices.degrees_of_freedom is not None
+        assert matrices.matrix_X is not None
+        assert matrices.matrix_Y is not None
+        assert matrices.matrix_W is not None
+        assert matrices.matrix_sW is not None
+        assert matrices.inner_constraints is None
+        assert matrices.matrix_R is None
+        assert matrices.matrix_sX is not None
+        assert matrices.degrees_of_freedom is not None
 
 
 def test_matrices_creation_with_robust_obs_method(
-    MethodManagerTester: MethodManagerAdjustment, adjustment_test_dataset: Dataset
+    MethodManagerTester: MethodManagerAdjustment, adjustment_test_dataset: Dataset, strategies: list
 ):
     """Test that proper matrices are created with robust observations method."""
     methods = MethodManagerTester(observations="huber", free_adjustment=None)
-    matrices = MatricesDense(adjustment_test_dataset, methods)
+    for strategy in strategies:
+        matrices = MatricesDense(adjustment_test_dataset, methods, build_strategy=strategy)
 
-    assert matrices.matrix_X is not None
-    assert matrices.matrix_Y is not None
-    assert matrices.matrix_W is not None
-    assert matrices.matrix_sW is not None
-    assert matrices.inner_constraints is None
-    assert matrices.matrix_R is None
-    assert matrices.matrix_sX is not None
-    assert matrices.degrees_of_freedom is not None
+        assert matrices.matrix_X is not None
+        assert matrices.matrix_Y is not None
+        assert matrices.matrix_W is not None
+        assert matrices.matrix_sW is not None
+        assert matrices.inner_constraints is None
+        assert matrices.matrix_R is None
+        assert matrices.matrix_sX is not None
+        assert matrices.degrees_of_freedom is not None
 
 
 def test_matrices_creation_with_ordinary_free_adj_method(
-    MethodManagerTester: MethodManagerAdjustment, adjustment_test_dataset: Dataset
+    MethodManagerTester: MethodManagerAdjustment, adjustment_test_dataset: Dataset, strategies: list
 ):
     """Test that proper matrices are created with ordinary free adjustment method."""
     methods = MethodManagerTester(observations="ordinary", free_adjustment="ordinary")
-    matrices = MatricesDense(adjustment_test_dataset, methods)
+    for strategy in strategies:
+        matrices = MatricesDense(adjustment_test_dataset, methods, build_strategy=strategy)
 
-    assert matrices.matrix_X is not None
-    assert matrices.matrix_Y is not None
-    assert matrices.matrix_W is None
-    assert matrices.matrix_sW is None
-    assert matrices.inner_constraints is None
-    assert matrices.matrix_R is None
-    assert matrices.matrix_sX is None
-    assert matrices.degrees_of_freedom is not None
+        assert matrices.matrix_X is not None
+        assert matrices.matrix_Y is not None
+        assert matrices.matrix_W is None
+        assert matrices.matrix_sW is None
+        assert matrices.inner_constraints is None
+        assert matrices.matrix_R is None
+        assert matrices.matrix_sX is None
+        assert matrices.degrees_of_freedom is not None
 
 
 def test_matrices_creation_with_weighted_free_adj_method(
-    MethodManagerTester: MethodManagerAdjustment, adjustment_test_dataset: Dataset
+    MethodManagerTester: MethodManagerAdjustment, adjustment_test_dataset: Dataset, strategies: list
 ):
     """Test that proper matrices are created with weighted free adjustment method."""
     methods = MethodManagerTester(observations="ordinary", free_adjustment="weighted")
-    matrices = MatricesDense(adjustment_test_dataset, methods)
+    for strategy in strategies:
+        matrices = MatricesDense(adjustment_test_dataset, methods, build_strategy=strategy)
 
-    assert matrices.matrix_X is not None
-    assert matrices.matrix_Y is not None
-    assert matrices.matrix_W is None
-    assert matrices.matrix_sW is not None
-    assert matrices.inner_constraints is not None
-    assert matrices.matrix_R is not None
-    assert matrices.matrix_sX is None
-    assert matrices.degrees_of_freedom is not None
+        assert matrices.matrix_X is not None
+        assert matrices.matrix_Y is not None
+        assert matrices.matrix_W is None
+        assert matrices.matrix_sW is not None
+        assert matrices.inner_constraints is not None
+        assert matrices.matrix_R is not None
+        assert matrices.matrix_sX is None
+        assert matrices.degrees_of_freedom is not None
 
 
 def test_matrices_creation_with_robust_free_adj_method(
-    MethodManagerTester: MethodManagerAdjustment, adjustment_test_dataset: Dataset
+    MethodManagerTester: MethodManagerAdjustment, adjustment_test_dataset: Dataset, strategies: list
 ):
     """Test that proper matrices are created with weighted free adjustment method."""
     methods = MethodManagerTester(observations="ordinary", free_adjustment="weighted")
-    matrices = MatricesDense(adjustment_test_dataset, methods)
+    for strategy in strategies:
+        matrices = MatricesDense(adjustment_test_dataset, methods, build_strategy=strategy)
 
-    assert matrices.matrix_X is not None
-    assert matrices.matrix_Y is not None
-    assert matrices.matrix_W is None
-    assert matrices.matrix_sW is not None
-    assert matrices.inner_constraints is not None
-    assert matrices.matrix_R is not None
-    assert matrices.matrix_sX is None
-    assert matrices.degrees_of_freedom is not None
+        assert matrices.matrix_X is not None
+        assert matrices.matrix_Y is not None
+        assert matrices.matrix_W is None
+        assert matrices.matrix_sW is not None
+        assert matrices.inner_constraints is not None
+        assert matrices.matrix_R is not None
+        assert matrices.matrix_sX is None
+        assert matrices.degrees_of_freedom is not None
 
 
 def test_matrices_inner_constraints_changed(
