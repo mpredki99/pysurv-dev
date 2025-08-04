@@ -106,7 +106,12 @@ class IterationDense(Iteration):
         sX = self._lsq_matrices.matrix_sX
         sW = self._lsq_matrices.matrix_sW
 
-        N1 = X.T @ (W @ X if W is not None else X)
+        if W is not None:
+            N1 = X.T @ W @ X
+            self._L = X.T @ W @ Y
+        else:
+            N1 = X.T @ X
+            self._L = X.T @ Y
 
         if sX is not None and sW is not None:
             N2 = sX.T @ sW @ sX
@@ -118,7 +123,6 @@ class IterationDense(Iteration):
         N = N1 + N2 if N2 is not None else N1
 
         self._N_inv = pinv(N)
-        self._L = X.T @ (W @ Y if W is not None else Y)
 
     def _calculate_increment_matrix(self):
         """Calculate the increments matrix for coordinates."""
@@ -134,7 +138,7 @@ class IterationDense(Iteration):
 
     def _calculate_increments(self):
         """Calculate the increments vector."""
-        self._increments = self.inv_gram_matrix @ self.cross_product
+        self._increments = self._N_inv @ self._L
 
     def _calculate_point_weights(self):
         """Calculate the point weights from sW matrix."""
@@ -172,6 +176,7 @@ class IterationDense(Iteration):
         self._cov_Y = X @ self._cov_X @ X.T
 
         n = self._cov_Y.shape[0]
+
         diag_idx = np.diag_indices(n)
         weight_coffactor_matrix = pinv(W) if W is not None else np.eye(n)
         weight_coffactor_matrix[diag_idx] *= residual_variance
