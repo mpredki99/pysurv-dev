@@ -97,7 +97,10 @@ class Matrices(ABC):
     @property
     def matrix_W(self) -> np.ndarray:
         """Return the observation weight matrix (W) for least squares adjustment."""
-        if self.calculate_weights and self._W is None:
+        if not self.calculate_weights:
+            return
+
+        if self._W is None:
             self._build_xyw_matrices()
         return self._W
 
@@ -124,14 +127,20 @@ class Matrices(ABC):
     @property
     def matrix_sX(self) -> np.ndarray:
         """Return the control point corrections matrix (sX) for least squares adjustment."""
-        if self._methods.free_adjustment is None and self._sX is None:
+        if self._methods.free_adjustment is not None:
+            return
+
+        if self._sX is None:
             self._build_sx_matrix()
         return self._sX
 
     @property
     def matrix_sW(self) -> np.ndarray:
         """Return the the control point weight matrix (sW) for least squares adjustment."""
-        if self._methods.free_adjustment != "ordinary" and self._sW is None:
+        if self._methods.free_adjustment == "ordinary":
+            return
+
+        if self._sW is None:
             self._build_sw_matrix()
         return self._sW
 
