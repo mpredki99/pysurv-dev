@@ -15,8 +15,8 @@ from .matrices import Matrices
 class IterationDense(Iteration):
     """Class that implements LSQ adjustment on numpy dense format stored matrices."""
 
-    def __init__(self, lsq_matrices: Matrices) -> None:
-        super().__init__(lsq_matrices)
+    def __init__(self, matrices: Matrices) -> None:
+        super().__init__(matrices)
         self._counter = 0
         self._N_inv = None
         self._L = None
@@ -30,7 +30,7 @@ class IterationDense(Iteration):
         self._cov_Y = None
         self._cov_r = None
 
-        coordinate_indices = lsq_matrices.indexer.coordinate_indices.values
+        coordinate_indices = self._lsq_matrices.indexer.coordinate_indices.values
         self._coord_mask = self._get_coord_mask(coordinate_indices)
         self._coord_idx = self._get_coord_idx(coordinate_indices)
 

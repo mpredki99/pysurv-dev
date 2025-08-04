@@ -12,8 +12,8 @@ from .matrices import Matrices
 class Iteration(ABC):
     """Abstract base class for LSQ iteration strategy objects."""
 
-    def __init__(self, lsq_matrices: Matrices) -> None:
-        self._lsq_matrices = lsq_matrices
+    def __init__(self, matrices: Matrices) -> None:
+        self._lsq_matrices = matrices
 
     @abstractmethod
     def run(self):
