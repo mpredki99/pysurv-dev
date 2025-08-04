@@ -33,7 +33,7 @@ class MethodManagerAdjustment(ABC):
             obs_tuning_constants, self._observations
         )
         self._free_adjustment = self._get_free_adjustment(free_adjustment)
-        self._free_tuning_constants = self._get_tuning_constants(
+        self._free_adj_tuning_constants = self._get_tuning_constants(
             free_adj_tuning_constants, self._free_adjustment
         )
 
@@ -75,12 +75,12 @@ class MethodManagerAdjustment(ABC):
     @property
     def free_adj_tuning_constants(self) -> dict:
         """Return tuning constants used for inner constraint matrix reweight."""
-        return self._free_tuning_constants
+        return self._free_adj_tuning_constants
 
     @free_adj_tuning_constants.setter
     def free_adj_tuning_constants(self, value: dict | None) -> None:
         """Return tuning constants used for inner constraint matrix reweight."""
-        self._free_tuning_constants = self._get_tuning_constants(
+        self._free_adj_tuning_constants = self._get_tuning_constants(
             value, self._free_adjustment
         )
 
@@ -109,8 +109,8 @@ class MethodManagerAdjustment(ABC):
 
     def _refresh_free_tuning_constants(self):
         """Set new values of free tuning constants."""
-        self._free_tuning_constants = self._get_tuning_constants(
-            self._free_tuning_constants, self._free_adjustment
+        self._free_adj_tuning_constants = self._get_tuning_constants(
+            self._free_adj_tuning_constants, self._free_adjustment
         )
 
     def _inject_matrices(self, matrices):
