@@ -237,19 +237,19 @@ def test_t_method_tuning_constants_before_injection() -> None:
     assert "k" in method_manager.obs_tuning_constants.keys()
 
 
-def test_t_method_tuning_constants_after_injection(FixedMatrices: Matrices) -> None:
+def test_t_method_tuning_constants_after_injection(MatricesTester: Matrices) -> None:
     """Test t method tuning constants after matrix injection has value."""
     method_manager = MethodManagerRobust(observations="t")
-    FixedMatrices(methods=method_manager)
+    MatricesTester(methods=method_manager)
     k = method_manager.obs_tuning_constants.get("k")
 
     assert k == 20
 
 
-def test_refresh_degress_of_freedom_after_injection(FixedMatrices: Matrices) -> None:
+def test_refresh_degress_of_freedom_after_injection(MatricesTester: Matrices) -> None:
     """Test refreshing degrees of freedom after matrix injection."""
     method_manager = MethodManagerRobust(observations="t")
-    FixedMatrices(methods=method_manager)
+    MatricesTester(methods=method_manager)
 
     obs_k = method_manager.obs_tuning_constants.get("k")
 
