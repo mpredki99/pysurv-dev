@@ -12,8 +12,10 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from pysurv import config
-from pysurv.adjustment import config_sigma, config_solver
+from pysurv import Dataset, config
+from pysurv.adjustment import MatricesDense, config_sigma, config_solver
+from pysurv.adjustment.matrices import Matrices
+from pysurv.adjustment.method_manager_adjustment import MethodManagerAdjustment
 
 
 # Fixtures for restoring original state config objects
@@ -687,3 +689,12 @@ def MatricesTester():
             pass
 
     return CreateMatricesTester
+
+
+@pytest.fixture
+def adjustment_test_matrices(
+    adjustment_test_dataset: Dataset, MethodManagerTester: MethodManagerAdjustment
+) -> Matrices:
+    """Return matrices object created based on test dataset."""
+    methods = MethodManagerTester()
+    return MatricesDense(adjustment_test_dataset, methods)
