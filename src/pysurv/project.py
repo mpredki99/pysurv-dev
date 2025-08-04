@@ -34,20 +34,20 @@ class Project:
 
     def adjust(
         self,
-        method: str = "weighted",
-        tuning_constants: dict | None = None,
+        observations: str = "weighted",
+        obs_tuning_constants: dict | None = None,
         free_adjustment: str | None = None,
-        free_tuning_constants: dict | None = None,
+        free_adj_tuning_constants: dict | None = None,
         config_sigma_index: str | None = None,
         matrices_build_strategy: str | None = None,
         config_solver_index: str | None = None,
     ) -> None:
         """Perform least squares adjustment."""
         method_manager = MethodManagerRobust(
-            observations=method,
-            obs_tuning_constants=tuning_constants,
+            observations=observations,
+            obs_tuning_constants=obs_tuning_constants,
             free_adjustment=free_adjustment,
-            free_adj_tuning_constants=free_tuning_constants,
+            free_adj_tuning_constants=free_adj_tuning_constants,
         )
         matrices = MatricesDense(
             self._dataset,
