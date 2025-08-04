@@ -49,7 +49,7 @@ class Solver:
         if self._results is None and self.iteration.counter > 0:
             self._prepare_adjustment_results()
         return self._results
-    
+
     def _get_lsq_iteration(self):
         """Returns iteration object."""
         return IterationDense(self._lsq_matrices)
@@ -59,7 +59,7 @@ class Solver:
         if index is None:
             index = config_solver.default_index
         return config_solver[index]
-    
+
     def _get_n_sigma_coords(self):
         """Calculate number of points excluding that with 0 weight."""
         sW = self._lsq_matrices.matrix_sW
@@ -115,8 +115,8 @@ class Solver:
 
         self._residual_sigmas = np.sqrt(self._residual_variances)
         self._coord_corrections_sigmas = np.sqrt(self._coord_corrections_variances)
-        
-        if self.lsq_matrices.methods.free_adjustment == 'ordinary':
+
+        if self.lsq_matrices.methods.free_adjustment == "ordinary":
             inner_constraints = "pseudoinverse"
         else:
             inner_constraints = self.lsq_matrices.inner_constraints
@@ -142,8 +142,6 @@ class Solver:
             "cov_Y": self._iteration.covariance_Y,
             "cov_r": self._iteration.covariance_r,
         }
-        
-        
 
     def solve(self):
         """Run the adjustment process."""
