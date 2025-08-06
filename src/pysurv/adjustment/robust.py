@@ -41,7 +41,6 @@ def huber(v: np.ndarray, c: float = 1.345) -> np.ndarray:
 def slope(v: np.ndarray, c: float = 2, a: float = 2) -> np.ndarray:
     """Compute slope function reweight coefficients."""
     v = np.abs(v)
-    c, a = c
     weights = 1 + (c - v) / a
     return np.clip(weights, 0, 1)
 
@@ -49,7 +48,6 @@ def slope(v: np.ndarray, c: float = 2, a: float = 2) -> np.ndarray:
 def hampel(v: np.ndarray, a: float = 1.7, b: float = 3.4, c: float = 8.5) -> np.ndarray:
     """Compute Hampel M-estimator reweight coefficients."""
     v = np.abs(v)
-    a, b, c = c
     weights = np.ones_like(v)
     weights[v > a] = np.divide(a, v[v > a])
     weights[v > b] = np.divide(a, v[v > b]) * np.divide(c - v[v > b], c - b)
