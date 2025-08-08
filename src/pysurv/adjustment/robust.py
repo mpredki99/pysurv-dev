@@ -108,10 +108,10 @@ def exponential(v: np.ndarray, c: float = 2.0, n: float = 2.0) -> np.ndarray:
 
 
 @inf_to_zero
-def cra(v: np.ndarray, sigma_sq: float, c: float = 2.0, n: float = 2.0) -> np.ndarray:
+def cra(v: np.ndarray, res_var: float, c: float = 2.0, n: float = 2.0) -> np.ndarray:
     """Compute the Choice Rule of Alternative method reweight coefficients."""
     v = np.abs(v)
-    return np.exp(-(v**n) / (sigma_sq * c))
+    return np.exp(-(v**n) / (res_var * c))
 
 
 @inf_to_zero

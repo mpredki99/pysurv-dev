@@ -58,7 +58,7 @@ class MethodManager(AdjustmentMethodManager):
 
     def _get_cra_param(self) -> dict:
         """Get cra method specific param."""
-        return {"sigma_sq": None}
+        return {"res_var": None}
 
     def _get_t_param(self) -> dict:
         """Get t method specific param."""
