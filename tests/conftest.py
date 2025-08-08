@@ -13,9 +13,9 @@ import pandas as pd
 import pytest
 
 from pysurv import Dataset, config
-from pysurv.adjustment import MatricesDense, config_sigma, config_solver
+from pysurv.adjustment import DenseMatrices, config_sigma, config_solver
 from pysurv.adjustment.matrices import Matrices
-from pysurv.adjustment.method_manager_adjustment import MethodManagerAdjustment
+from pysurv.adjustment.adjustment_method_manager import AdjustmentMethodManager
 
 
 # Fixtures for restoring original state config objects
@@ -619,9 +619,9 @@ def adjustment_test_dataset():
 @pytest.fixture
 def MethodManagerTester():
     """Fixture providing a test MethodManagerAdjustment subclass."""
-    from pysurv.adjustment.method_manager_adjustment import MethodManagerAdjustment
+    from pysurv.adjustment.adjustment_method_manager import AdjustmentMethodManager
 
-    class CreateMethodManagerTester(MethodManagerAdjustment):
+    class CreateMethodManagerTester(AdjustmentMethodManager):
         def __init__(
             self,
             observations: str = "weighted",
@@ -648,10 +648,10 @@ def MethodManagerTester():
 def MatricesTester():
     """Fixture providing a test Matrices subclass."""
     from pysurv.adjustment.matrices import Matrices
-    from pysurv.adjustment.method_manager_adjustment import MethodManagerAdjustment
+    from pysurv.adjustment.adjustment_method_manager import AdjustmentMethodManager
 
     class CreateMatricesTester(Matrices):
-        def __init__(self, methods: MethodManagerAdjustment):
+        def __init__(self, methods: AdjustmentMethodManager):
             self._X = None
             self._Y = None
             self._W = None
@@ -693,11 +693,11 @@ def MatricesTester():
 
 @pytest.fixture
 def adjustment_test_matrices(
-    adjustment_test_dataset: Dataset, MethodManagerTester: MethodManagerAdjustment
+    adjustment_test_dataset: Dataset, MethodManagerTester: AdjustmentMethodManager
 ) -> Matrices:
     """Return matrices object created based on test dataset."""
     methods = MethodManagerTester()
-    return MatricesDense(adjustment_test_dataset, methods)
+    return DenseMatrices(adjustment_test_dataset, methods)
 
 
 @pytest.fixture
