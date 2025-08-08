@@ -9,7 +9,7 @@ from abc import ABC, abstractmethod
 from pysurv.validators._validators import validate_method
 
 
-class MethodManagerAdjustment(ABC):
+class AdjustmentMethodManager(ABC):
     """
     Abstract base class for managing adjustment methods and tuning constants in least squares adjustment.
 
