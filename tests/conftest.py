@@ -703,4 +703,4 @@ def adjustment_test_matrices(
 @pytest.fixture
 def strategies():
     """Returns names of the matrices construct strategies."""
-    return ['speed', 'memory_safe']
+    return ["speed", "memory_safe"]
