@@ -13,7 +13,7 @@ from pysurv.data.dataset import Dataset
 
 from .matrix_constructors.indexer_matrix_x import IndexerMatrixX
 from .matrix_constructors.strategy_matrix_xyw_sw_factory import get_strategy
-from .method_manager_adjustment import MethodManagerAdjustment
+from .adjustment_method_manager import AdjustmentMethodManager
 
 
 class Matrices(ABC):
@@ -29,7 +29,7 @@ class Matrices(ABC):
     def __init__(
         self,
         dataset: Dataset,
-        methods: MethodManagerAdjustment,
+        methods: AdjustmentMethodManager,
         config_sigma_index: str | None = None,
         build_strategy: str | None = None,
     ):
