@@ -9,6 +9,7 @@ from ._warnings import (
     GeometryAssigningWarning,
     InvalidDataWarning,
     InvalidGeometryWarning,
+    SVDNotConvergeWarning,
 )
 
 __all__ = [
@@ -16,4 +17,5 @@ __all__ = [
     "GeometryAssigningWarning",
     "InvalidDataWarning",
     "InvalidGeometryWarning",
+    "SVDNotConvergeWarning",
 ]

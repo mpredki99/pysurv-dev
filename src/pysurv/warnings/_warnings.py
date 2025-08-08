@@ -25,6 +25,10 @@ class DefaultIndexWarning(AdjustmentWarning):
     pass
 
 
+class SVDNotConvergeWarning(AdjustmentWarning):
+    pass
+
+
 class DataWarning(PySurvWarning):
     pass
 
