@@ -12,7 +12,7 @@ from .matrix_constructors.matrix_r_constructor import MatrixRConstructor
 from .matrix_constructors.matrix_sx_constructor import MatrixSXConstructor
 
 
-class MatricesDense(Matrices):
+class DenseMatrices(Matrices):
     """
     Concrete implementation of the Matrices class for least squares adjustment.
 
