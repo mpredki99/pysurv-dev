@@ -1,4 +1,4 @@
-from inspect import signature
+from inspect import signature, unwrap
 
 from . import robust
 from .method_manager_adjustment import MethodManagerAdjustment
@@ -9,15 +9,15 @@ class MethodManagerRobust(MethodManagerAdjustment):
         self, tuning_constants: dict | None, method: str | None
     ) -> dict | None:
         """Determine and return tuning constants used for updating weight matrices."""
-        if self._no_tuning_constant_required(method):
+        if not self.is_robust(method):
             return None
 
         tuning_constants = self._get_default_tuning_constants(tuning_constants, method)
         return self._add_method_specific_params(tuning_constants, method)
 
-    def _no_tuning_constant_required(self, method: str | None) -> bool:
+    def is_robust(self, method: str | None) -> bool:
         """Check if method requires no tuning constants."""
-        return method in {None, "ordinary", "weighted"}
+        return method not in {None, "ordinary", "weighted"}
 
     def _get_default_tuning_constants(
         self, tuning_constants: dict | None, method: str
@@ -36,7 +36,8 @@ class MethodManagerRobust(MethodManagerAdjustment):
     def _get_func_kwargs(self, method: str) -> dict:
         """Get kwargs with default values of robust method used for updating weights."""
         func = getattr(robust, method)
-        sig = signature(func)
+        wrapped_func = unwrap(func)
+        sig = signature(wrapped_func)
         return {
             key: value.default
             for key, value in sig.parameters.items()
