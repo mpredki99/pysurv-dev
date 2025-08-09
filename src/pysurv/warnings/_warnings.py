@@ -29,6 +29,10 @@ class SVDNotConvergeWarning(AdjustmentWarning):
     pass
 
 
+class InvalidVarianceWarning(AdjustmentWarning):
+    pass
+
+
 class DataWarning(PySurvWarning):
     pass
 
