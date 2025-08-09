@@ -7,12 +7,12 @@
 import numpy as np
 
 from . import robust
-from .matrices import Matrices
+from .adjustment_matrices import AdjustmentMatrices
 from .matrix_constructors.matrix_r_constructor import MatrixRConstructor
 from .matrix_constructors.matrix_sx_constructor import MatrixSXConstructor
 
 
-class DenseMatrices(Matrices):
+class DenseMatrices(AdjustmentMatrices):
     """
     Concrete implementation of the Matrices class for least squares adjustment.
 

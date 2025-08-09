@@ -16,7 +16,7 @@ from .matrix_constructors.indexer_matrix_x import IndexerMatrixX
 from .matrix_constructors.strategy_matrix_xyw_sw_factory import get_strategy
 
 
-class Matrices(ABC):
+class AdjustmentMatrices(ABC):
     """
     Base class for constructing and managing matrices required for least squares adjustment.
 

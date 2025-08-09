@@ -6,13 +6,13 @@
 
 from abc import ABC, abstractmethod
 
-from .matrices import Matrices
+from .adjustment_matrices import AdjustmentMatrices
 
 
 class AdjustmentIteration(ABC):
     """Abstract base class for LSQ iteration strategy objects."""
 
-    def __init__(self, matrices: Matrices) -> None:
+    def __init__(self, matrices: AdjustmentMatrices) -> None:
         self._lsq_matrices = matrices
         self._counter = 0
 

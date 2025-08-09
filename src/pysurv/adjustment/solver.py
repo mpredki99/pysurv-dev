@@ -10,7 +10,7 @@ from warnings import warn
 
 import numpy as np
 
-from pysurv.adjustment.matrices import Matrices
+from pysurv.adjustment.adjustment_matrices import AdjustmentMatrices
 from pysurv.data.controls import Controls
 from pysurv.warnings._warnings import InvalidVarianceWarning
 
@@ -20,6 +20,7 @@ from .dense_iteration import DenseIteration
 
 class Solver(AdjustmentSolver):
     """Class for solving surveying adjustment task."""
+
     @property
     def n_iter(self):
         return self._iteration.counter

@@ -5,11 +5,13 @@
 # Full text of the license can be found in the LICENSE and COPYING files in the repository.
 
 from pysurv import Dataset
+from pysurv.adjustment.adjustment_matrices import AdjustmentMatrices
 from pysurv.adjustment.dense_iteration import DenseIteration
-from pysurv.adjustment.matrices import Matrices
 
 
-def test_calculate_normal_equations(adjustment_test_matrices: Matrices) -> None:
+def test_calculate_normal_equations(
+    adjustment_test_matrices: AdjustmentMatrices,
+) -> None:
     """Test that normal equations calculations work properly."""
     iteration = DenseIteration(adjustment_test_matrices)
     iteration.run()
@@ -19,7 +21,7 @@ def test_calculate_normal_equations(adjustment_test_matrices: Matrices) -> None:
 
 
 def test_calculate_increment_matrix(
-    adjustment_test_matrices: Matrices, adjustment_test_dataset: Dataset
+    adjustment_test_matrices: AdjustmentMatrices, adjustment_test_dataset: Dataset
 ) -> None:
     """Test that increment matrix calculations work properly."""
     iteration = DenseIteration(adjustment_test_matrices)
@@ -32,7 +34,9 @@ def test_calculate_increment_matrix(
     )
 
 
-def test_calculate_increment_matrix(adjustment_test_matrices: Matrices) -> None:
+def test_calculate_increment_matrix(
+    adjustment_test_matrices: AdjustmentMatrices,
+) -> None:
     """Test that point weights calculations work properly."""
     iteration = DenseIteration(adjustment_test_matrices)
     iteration.run()
@@ -40,7 +44,9 @@ def test_calculate_increment_matrix(adjustment_test_matrices: Matrices) -> None:
     assert iteration.coordinate_weights is not None
 
 
-def test_calculate_increment_matrix(adjustment_test_matrices: Matrices) -> None:
+def test_calculate_increment_matrix(
+    adjustment_test_matrices: AdjustmentMatrices,
+) -> None:
     """Test that observation residuals calculations work properly."""
     iteration = DenseIteration(adjustment_test_matrices)
     iteration.run()
@@ -48,7 +54,9 @@ def test_calculate_increment_matrix(adjustment_test_matrices: Matrices) -> None:
     assert iteration.obs_residuals is not None
 
 
-def test_calculate_residual_variance(adjustment_test_matrices: Matrices) -> None:
+def test_calculate_residual_variance(
+    adjustment_test_matrices: AdjustmentMatrices,
+) -> None:
     """Test that residual variance calculations work properly."""
     iteration = DenseIteration(adjustment_test_matrices)
     iteration.run()
@@ -56,7 +64,9 @@ def test_calculate_residual_variance(adjustment_test_matrices: Matrices) -> None
     assert iteration.residual_variance is not None
 
 
-def test_calculate_covariance_matrices(adjustment_test_matrices: Matrices) -> None:
+def test_calculate_covariance_matrices(
+    adjustment_test_matrices: AdjustmentMatrices,
+) -> None:
     """Test that residual variance calculations work properly."""
     iteration = DenseIteration(adjustment_test_matrices)
     iteration.run()
@@ -71,7 +81,7 @@ def test_calculate_covariance_matrices(adjustment_test_matrices: Matrices) -> No
     assert iteration.covariance_r.shape == (n_measurements, n_measurements)
 
 
-def test_run(adjustment_test_matrices: Matrices) -> None:
+def test_run(adjustment_test_matrices: AdjustmentMatrices) -> None:
     """Test that iteration runs properly."""
     iteration = DenseIteration(adjustment_test_matrices)
 

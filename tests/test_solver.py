@@ -6,11 +6,11 @@
 
 from pysurv import Dataset
 from pysurv.adjustment import Solver
-from pysurv.adjustment.matrices import Matrices
+from pysurv.adjustment.adjustment_matrices import AdjustmentMatrices
 
 
 def test_prepare_results(
-    adjustment_test_matrices: Matrices, adjustment_test_dataset: Dataset
+    adjustment_test_matrices: AdjustmentMatrices, adjustment_test_dataset: Dataset
 ) -> None:
     """Test that beofre start calculations results are not generated."""
     controls = adjustment_test_dataset.controls
@@ -21,7 +21,7 @@ def test_prepare_results(
 
 
 def test_iterate(
-    adjustment_test_matrices: Matrices, adjustment_test_dataset: Dataset
+    adjustment_test_matrices: AdjustmentMatrices, adjustment_test_dataset: Dataset
 ) -> None:
     """Test that iterate method works properly."""
     controls = adjustment_test_dataset.controls
@@ -34,7 +34,7 @@ def test_iterate(
 
 
 def test_solve_observation_ordinary(
-    adjustment_test_matrices: Matrices, adjustment_test_dataset: Dataset
+    adjustment_test_matrices: AdjustmentMatrices, adjustment_test_dataset: Dataset
 ) -> None:
     """Test that solve method works properly with observation ordinary method."""
     controls = adjustment_test_dataset.controls
@@ -52,7 +52,7 @@ def test_solve_observation_ordinary(
 
 
 def test_solve_observation_weighted(
-    adjustment_test_matrices: Matrices, adjustment_test_dataset: Dataset
+    adjustment_test_matrices: AdjustmentMatrices, adjustment_test_dataset: Dataset
 ) -> None:
     """Test that solve method works properly with observation weighted method."""
     controls = adjustment_test_dataset.controls
@@ -70,7 +70,7 @@ def test_solve_observation_weighted(
 
 
 def test_solve_observation_robust(
-    adjustment_test_matrices: Matrices, adjustment_test_dataset: Dataset
+    adjustment_test_matrices: AdjustmentMatrices, adjustment_test_dataset: Dataset
 ) -> None:
     """Test that solve method works properly with observation robust method."""
     controls = adjustment_test_dataset.controls
@@ -88,7 +88,7 @@ def test_solve_observation_robust(
 
 
 def test_solve_free_adj_ordinary(
-    adjustment_test_matrices: Matrices, adjustment_test_dataset: Dataset
+    adjustment_test_matrices: AdjustmentMatrices, adjustment_test_dataset: Dataset
 ) -> None:
     """Test that solve method works properly with free adjustment ordinary method."""
     controls = adjustment_test_dataset.controls
@@ -106,7 +106,7 @@ def test_solve_free_adj_ordinary(
 
 
 def test_solve_free_adj_weighted(
-    adjustment_test_matrices: Matrices, adjustment_test_dataset: Dataset
+    adjustment_test_matrices: AdjustmentMatrices, adjustment_test_dataset: Dataset
 ) -> None:
     """Test that solve method works properly with free adjustment weighted method."""
     controls = adjustment_test_dataset.controls
@@ -124,7 +124,7 @@ def test_solve_free_adj_weighted(
 
 
 def test_solve_free_adj_robust(
-    adjustment_test_matrices: Matrices, adjustment_test_dataset: Dataset
+    adjustment_test_matrices: AdjustmentMatrices, adjustment_test_dataset: Dataset
 ) -> None:
     """Test that solve method works properly with free adjustment robust method."""
     controls = adjustment_test_dataset.controls

@@ -8,16 +8,16 @@ from abc import ABC, abstractmethod
 
 from pysurv.data.controls import Controls
 
+from .adjustment_matrices import AdjustmentMatrices
 from .config_solver import config_solver
 from .dense_iteration import DenseIteration
-from .matrices import Matrices
 
 
 class AdjustmentSolver(ABC):
     def __init__(
         self,
         controls: Controls,
-        lsq_matrices: Matrices,
+        lsq_matrices: AdjustmentMatrices,
         config_solver_index: str | None = None,
         create_list_of_variances: bool = False,
     ) -> None:
@@ -30,7 +30,7 @@ class AdjustmentSolver(ABC):
         self._n_movable_tie_points = self._get_n_movable_tie_points()
         self._config_solver = self._get_config_solver(config_solver_index)
         self._results = None
-        
+
         self._iteration = self._get_lsq_iteration()
         self._matrices.methods._inject_solver(self)
 
@@ -169,7 +169,7 @@ class AdjustmentSolver(ABC):
         if index is None:
             index = config_solver.default_index
         return config_solver[index]
-    
+
     def _get_n_movable_tie_points(self):
         """Get number of movable reference points."""
         if self._matrices.matrix_sW is None:

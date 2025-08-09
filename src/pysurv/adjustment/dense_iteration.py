@@ -14,13 +14,13 @@ from pysurv.warnings import SVDNotConvergeWarning
 
 from ._constants import INVALID_INDEX
 from .adjustment_iteration import AdjustmentIteration
-from .matrices import Matrices
+from .adjustment_matrices import AdjustmentMatrices
 
 
 class DenseIteration(AdjustmentIteration):
     """Class that implements LSQ adjustment iteration on numpy dense format stored matrices."""
 
-    def __init__(self, matrices: Matrices) -> None:
+    def __init__(self, matrices: AdjustmentMatrices) -> None:
         super().__init__(matrices)
 
         coordinate_indices = self._lsq_matrices.indexer.coordinate_indices.values
