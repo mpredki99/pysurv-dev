@@ -11,9 +11,9 @@ import pandas as pd
 
 from pysurv.data.dataset import Dataset
 
+from .adjustment_method_manager import AdjustmentMethodManager
 from .matrix_constructors.indexer_matrix_x import IndexerMatrixX
 from .matrix_constructors.strategy_matrix_xyw_sw_factory import get_strategy
-from .adjustment_method_manager import AdjustmentMethodManager
 
 
 class Matrices(ABC):
@@ -69,12 +69,12 @@ class Matrices(ABC):
     @property
     def calculate_weights(self) -> bool:
         """Return whether weight matrix is calculated for the adjustment."""
-        return self._methods.observations != "ordinary"
+        return self._methods.obs_adj != "ordinary"
 
     @property
     def apply_inner_constraints(self) -> bool:
         """Return whether inner constraints are applied for the adjustment."""
-        return self._methods.free_adjustment not in {None, "ordinary"}
+        return self._methods.free_adjustment not in [None, "ordinary"]
 
     @property
     def indexer(self):

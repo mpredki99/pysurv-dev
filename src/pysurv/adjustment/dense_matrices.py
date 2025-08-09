@@ -73,7 +73,7 @@ class DenseMatrices(Matrices):
         if not self._is_obs_method_robust():
             return
 
-        func = getattr(robust, self._methods.observations)
+        func = getattr(robust, self._methods.obs_adj)
         self._update_weights(self._W, v, func, self._methods.obs_tuning_constants)
 
     def update_sw_matrix(self, v: np.ndarray) -> None:

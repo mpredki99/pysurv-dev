@@ -20,32 +20,34 @@ class AdjustmentMethodManager(ABC):
 
     def __init__(
         self,
-        observations: str = "weighted",
+        obs_adj: str = "weighted",
         obs_tuning_constants: dict | None = None,
         free_adjustment: str | None = None,
         free_adj_tuning_constants: dict | None = None,
     ) -> None:
         # Matrices object - will be injected during matrices initializaton
         self._matrices = None
+        # Solver object - will be injected during solver initialization
+        self._solver = None
 
-        self._observations = validate_method(observations)
+        self._obs_adj = validate_method(obs_adj)
         self._obs_tuning_constants = self._get_tuning_constants(
-            obs_tuning_constants, self._observations
+            obs_tuning_constants, self._obs_adj, "obs"
         )
         self._free_adjustment = self._get_free_adjustment(free_adjustment)
         self._free_adj_tuning_constants = self._get_tuning_constants(
-            free_adj_tuning_constants, self._free_adjustment
+            free_adj_tuning_constants, self._free_adjustment, "free"
         )
 
     @property
-    def observations(self) -> str:
+    def obs_adj(self) -> str:
         """Return method used for observation weight matrix reweight."""
-        return self._observations
+        return self._obs_adj
 
-    @observations.setter
-    def observations(self, value: str) -> None:
+    @obs_adj.setter
+    def obs_adj(self, value: str) -> None:
         """Set method used for observation weight matrix reweight."""
-        self._observations = validate_method(value)
+        self._obs_adj = validate_method(value)
         self._refresh_obs_tuning_constants()
 
     @property
@@ -57,7 +59,7 @@ class AdjustmentMethodManager(ABC):
     def obs_tuning_constants(self, value: dict | None) -> None:
         """Set tuning constants used for observation weight matrix reweight."""
         self._obs_tuning_constants = self._get_tuning_constants(
-            value, self._observations
+            value, self._obs_adj, "obs"
         )
 
     @property
@@ -81,8 +83,12 @@ class AdjustmentMethodManager(ABC):
     def free_adj_tuning_constants(self, value: dict | None) -> None:
         """Return tuning constants used for inner constraint matrix reweight."""
         self._free_adj_tuning_constants = self._get_tuning_constants(
-            value, self._free_adjustment
+            value, self._free_adjustment, "free"
         )
+
+    def is_robust(self, method: str | None) -> bool:
+        """Check if method requires no tuning constants."""
+        return method not in {None, "ordinary", "weighted"}
 
     def _get_free_adjustment(self, free_adjustment: str | None) -> str | None:
         """Returns validated free adjustment method or None."""
@@ -91,36 +97,44 @@ class AdjustmentMethodManager(ABC):
         else:
             return validate_method(free_adjustment)
 
-    def _refresh_degrees_of_freedom(self):
+    def _refresh_degrees_of_freedom(self) -> None:
         """Refresh degrees of freedom on matrices object if injected."""
         if self._matrices is not None:
             self._matrices._refresh_degrees_of_freedom()
 
-    def _refresh_tuning_constants(self):
+    def _refresh_tuning_constants(self) -> None:
         """Set new values of obs tuinig constants and free tuning constants."""
         self._refresh_obs_tuning_constants()
         self._refresh_free_tuning_constants()
 
-    def _refresh_obs_tuning_constants(self):
+    def _refresh_obs_tuning_constants(self) -> None:
         """Set new values of obs tuning constants."""
         self._obs_tuning_constants = self._get_tuning_constants(
-            self._obs_tuning_constants, self._observations
+            self._obs_tuning_constants, self._obs_adj, "obs"
         )
 
-    def _refresh_free_tuning_constants(self):
+    def _refresh_free_tuning_constants(self) -> None:
         """Set new values of free tuning constants."""
         self._free_adj_tuning_constants = self._get_tuning_constants(
-            self._free_adj_tuning_constants, self._free_adjustment
+            self._free_adj_tuning_constants, self._free_adjustment, "free"
         )
 
-    def _inject_matrices(self, matrices):
+    def _inject_matrices(self, matrices) -> None:
         """Inject parent matrices object."""
         self._matrices = matrices
         self._refresh_tuning_constants()
 
+    def _inject_solver(self, solver) -> None:
+        """Inject parent solver object."""
+        self._solver = solver
+        self._refresh_tuning_constants()
+
     @abstractmethod
     def _get_tuning_constants(
-        self, tuning_constants: dict | None, method: str | None
+        self,
+        tuning_constants: dict | None,
+        method: str | None,
+        type: str,
     ) -> dict | None:
         """Determine and return tuning constants used for updating weight matrices."""
         pass
