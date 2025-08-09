@@ -6,8 +6,11 @@
 
 import pytest
 
+from pysurv import Dataset
 from pysurv.adjustment import MethodManager
-from pysurv.adjustment.matrices import Matrices
+from pysurv.adjustment.adjustment_matrices import AdjustmentMatrices
+from pysurv.adjustment.adjustment_method_manager import AdjustmentMethodManager
+from pysurv.adjustment.adjustment_solver import AdjustmentSolver
 from pysurv.exceptions import InvalidMethodError
 
 
@@ -230,10 +233,10 @@ def test_cra_method_tuning_constants_before_solver_injection() -> None:
 
 
 def test_cra_method_tuning_constants_after_solver_injection(
-    MethodManagerConstructor,
-    DenseMatricesConstructor,
-    SolverConstructor,
-    adjustment_test_dataset,
+    MethodManagerConstructor: AdjustmentMethodManager,
+    DenseMatricesConstructor: AdjustmentMatrices,
+    SolverConstructor: AdjustmentSolver,
+    adjustment_test_dataset: Dataset,
 ) -> None:
     """Test CRA method tuning constants after solver injection is not None."""
     method_manager = MethodManagerConstructor(obs_adj="cra", free_adjustment="cra")
@@ -258,7 +261,7 @@ def test_t_method_tuning_constants_before_matrix_injection() -> None:
 
 
 def test_t_method_tuning_constants_after_matrix_injection(
-    MatricesTester: Matrices,
+    MatricesTester: AdjustmentMatrices,
 ) -> None:
     """Test t method tuning constants after matrix injection has value."""
     method_manager = MethodManager(obs_adj="t")
@@ -268,7 +271,9 @@ def test_t_method_tuning_constants_after_matrix_injection(
     assert k == 20
 
 
-def test_refresh_degress_of_freedom_after_injection(MatricesTester: Matrices) -> None:
+def test_refresh_degress_of_freedom_after_injection(
+    MatricesTester: AdjustmentMatrices,
+) -> None:
     """Test refreshing degrees of freedom after matrix injection."""
     method_manager = MethodManager(obs_adj="t")
     MatricesTester(methods=method_manager)
@@ -286,11 +291,12 @@ def test_refresh_degress_of_freedom_after_injection(MatricesTester: Matrices) ->
     assert free_k == 24
 
 
-def test_t_method_tuning_constants_after_solver_injection(MethodManagerConstructor,
-    DenseMatricesConstructor,
-    SolverConstructor,
-    adjustment_test_dataset
-    ) -> None:
+def test_t_method_tuning_constants_after_solver_injection(
+    MethodManagerConstructor: AdjustmentMethodManager,
+    DenseMatricesConstructor: AdjustmentMatrices,
+    SolverConstructor: AdjustmentSolver,
+    adjustment_test_dataset: Dataset,
+) -> None:
     """Test 't' method tuning constants after solver injection is not None."""
     method_manager = MethodManagerConstructor(obs_adj="t", free_adjustment="t")
     matrices = DenseMatricesConstructor(adjustment_test_dataset, method_manager)

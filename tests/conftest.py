@@ -6,7 +6,8 @@
 
 import os
 import tempfile
-from typing import Generator, List, Tuple
+from typing import Callable, Generator, List, Tuple
+from unittest.mock import Mock
 
 import numpy as np
 import pandas as pd
@@ -20,8 +21,9 @@ from pysurv.adjustment import (
     config_sigma,
     config_solver,
 )
+from pysurv.adjustment.adjustment_matrices import AdjustmentMatrices
 from pysurv.adjustment.adjustment_method_manager import AdjustmentMethodManager
-from pysurv.adjustment.matrices import Matrices
+from pysurv.adjustment.adjustment_solver import AdjustmentSolver
 
 
 # Fixtures for restoring original state config objects
@@ -597,9 +599,8 @@ def control_file_missing_mandatory_columns(
 
 # Test objects
 @pytest.fixture
-def mock_dataset_size():
+def mock_dataset_size() -> Callable[[pd.Series], Mock]:
     """Fixture providing mock dataset with customizable size."""
-    from unittest.mock import Mock
 
     def create_mock_dataset_size(size=pd.Series([0, 0, 0])):
 
@@ -615,17 +616,16 @@ def mock_dataset_size():
 
 
 @pytest.fixture
-def adjustment_test_dataset():
+def adjustment_test_dataset() -> Dataset:
     """Fixture providing sample dataset for performing adjustment."""
-    from pysurv import Dataset
-
     return Dataset.from_csv("tests/measurements.csv", "tests/controls.csv")
 
 
 @pytest.fixture
-def MethodManagerTester():
+def MethodManagerTester() -> (
+    Callable[[str, dict | None, str, dict | None], AdjustmentMethodManager]
+):
     """Fixture providing a test MethodManagerAdjustment subclass."""
-    from pysurv.adjustment.adjustment_method_manager import AdjustmentMethodManager
 
     class CreateMethodManagerTester(AdjustmentMethodManager):
         def __init__(
@@ -651,12 +651,10 @@ def MethodManagerTester():
 
 
 @pytest.fixture
-def MatricesTester():
+def MatricesTester() -> Callable[[AdjustmentMethodManager], AdjustmentMatrices]:
     """Fixture providing a test Matrices subclass."""
-    from pysurv.adjustment.adjustment_method_manager import AdjustmentMethodManager
-    from pysurv.adjustment.matrices import Matrices
 
-    class CreateMatricesTester(Matrices):
+    class CreateMatricesTester(AdjustmentMatrices):
         def __init__(self, methods: AdjustmentMethodManager):
             self._X = None
             self._Y = None
@@ -700,28 +698,28 @@ def MatricesTester():
 @pytest.fixture
 def adjustment_test_matrices(
     adjustment_test_dataset: Dataset, MethodManagerTester: AdjustmentMethodManager
-) -> Matrices:
+) -> AdjustmentMatrices:
     """Return matrices object created based on test dataset."""
     methods = MethodManagerTester()
     return DenseMatrices(adjustment_test_dataset, methods)
 
 
 @pytest.fixture
-def strategies():
+def strategies() -> List[str]:
     """Returns names of the matrices construct strategies."""
     return ["speed", "memory_safe"]
 
 
 @pytest.fixture
-def MethodManagerConstructor():
+def MethodManagerConstructor() -> Callable[[], AdjustmentMethodManager]:
     return MethodManager
 
 
 @pytest.fixture
-def DenseMatricesConstructor():
+def DenseMatricesConstructor() -> Callable[[], AdjustmentMatrices]:
     return DenseMatrices
 
 
 @pytest.fixture
-def SolverConstructor():
+def SolverConstructor() -> Callable[[], AdjustmentSolver]:
     return Solver
