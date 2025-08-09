@@ -7,12 +7,12 @@
 import pandas as pd
 
 from ._constants import DEFAULT_CONFIG_SOLVER
-from .config_adjustment import ConfigAdjustment, ConfigRow
+from .adjustment_config import AdjustmentConfig, AdjustmentConfigRow
 
 __all__ = ["config_solver"]
 
 
-class ConfigSolver(ConfigAdjustment):
+class ConfigSolver(AdjustmentConfig):
 
     _default = DEFAULT_CONFIG_SOLVER
 
@@ -55,7 +55,7 @@ class ConfigSolver(ConfigAdjustment):
         self.__setattr__(name, ConfigSolverRow(**data))
 
 
-class ConfigSolverRow(ConfigRow):
+class ConfigSolverRow(AdjustmentConfigRow):
     """Configuration class for solver iteration threshold and maximum iterations."""
 
     def __init__(self, **kwargs) -> None:

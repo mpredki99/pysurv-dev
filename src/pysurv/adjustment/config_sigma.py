@@ -16,12 +16,12 @@ from pysurv.validators._models import (
 )
 
 from ._constants import DEFAULT_CONFIG_SIGMA
-from .config_adjustment import ConfigAdjustment, ConfigRow
+from .adjustment_config import AdjustmentConfig, AdjustmentConfigRow
 
 __all__ = ["config_sigma"]
 
 
-class ConfigSigma(ConfigAdjustment):
+class ConfigSigma(AdjustmentConfig):
     """
     SigmaConfig manages and stores sigma (standard deviation) configurations for survey adjustment.
 
@@ -88,7 +88,7 @@ class ConfigSigma(ConfigAdjustment):
         return data.loc[index]
 
 
-class SigmaRow(ConfigRow):
+class SigmaRow(AdjustmentConfigRow):
     """
     SigmaRow represents a single row of sigma (standard deviation) configuration values.
     """

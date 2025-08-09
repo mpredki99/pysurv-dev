@@ -13,7 +13,7 @@ import pandas as pd
 from pysurv.warnings._warnings import DefaultIndexWarning
 
 
-class ConfigAdjustment(ABC):
+class AdjustmentConfig(ABC):
     def __init__(self) -> None:
         self._default_index = "default"
         self.restore_default()
@@ -115,7 +115,7 @@ class ConfigAdjustment(ABC):
         pass
 
 
-class ConfigRow(ABC):
+class AdjustmentConfigRow(ABC):
     """Base class for config rows."""
 
     def __getattr__(self, name: str):
