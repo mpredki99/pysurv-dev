@@ -16,7 +16,7 @@ def test_prepare_results(
     controls = adjustment_test_dataset.controls
     solver = Solver(controls, adjustment_test_matrices)
 
-    assert solver.iteration.counter == 0
+    assert solver.n_iter == 0
     assert solver.results is None
 
 
@@ -29,8 +29,8 @@ def test_iterate(
 
     solver.iterate()
 
+    assert solver.n_iter == 1
     assert solver.results is not None
-    assert solver.iteration.counter == 1
 
 
 def test_solve_observation_ordinary(
@@ -39,14 +39,14 @@ def test_solve_observation_ordinary(
     """Test that solve method works properly with observation ordinary method."""
     controls = adjustment_test_dataset.controls
     matrices = adjustment_test_matrices
-    matrices.methods.observations = "ordinary"
+    matrices.methods.obs_adj = "ordinary"
     solver = Solver(controls, adjustment_test_matrices)
 
     assert solver.results is None
 
     solver.solve()
 
-    assert solver.results.get("observations") == "ordinary"
+    assert solver.results.get("obs_adj_method") == "ordinary"
     assert solver.results.get("inner_constraints") is None
     assert solver.results is not None
 
@@ -57,14 +57,14 @@ def test_solve_observation_weighted(
     """Test that solve method works properly with observation weighted method."""
     controls = adjustment_test_dataset.controls
     matrices = adjustment_test_matrices
-    matrices.methods.observations = "weighted"
+    matrices.methods.obs_adj = "weighted"
     solver = Solver(controls, adjustment_test_matrices)
 
     assert solver.results is None
 
     solver.solve()
 
-    assert solver.results.get("observations") == "weighted"
+    assert solver.results.get("obs_adj_method") == "weighted"
     assert solver.results.get("inner_constraints") is None
     assert solver.results is not None
 
@@ -75,14 +75,14 @@ def test_solve_observation_robust(
     """Test that solve method works properly with observation robust method."""
     controls = adjustment_test_dataset.controls
     matrices = adjustment_test_matrices
-    matrices.methods.observations = "huber"
+    matrices.methods.obs_adj = "huber"
     solver = Solver(controls, adjustment_test_matrices)
 
     assert solver.results is None
 
     solver.solve()
 
-    assert solver.results.get("observations") == "huber"
+    assert solver.results.get("obs_adj_method") == "huber"
     assert solver.results.get("inner_constraints") is None
     assert solver.results is not None
 
@@ -100,8 +100,8 @@ def test_solve_free_adj_ordinary(
 
     solver.solve()
 
-    assert solver.results.get("free_adjustment") == "ordinary"
-    assert solver.results.get("inner_constraints") == "pseudoinverse"
+    assert solver.results.get("free_adj_method") == "ordinary"
+    assert solver.results.get("inner_constraints") == ["pseudoinverse"]
     assert solver.results is not None
 
 
@@ -118,7 +118,7 @@ def test_solve_free_adj_weighted(
 
     solver.solve()
 
-    assert solver.results.get("free_adjustment") == "weighted"
+    assert solver.results.get("free_adj_method") == "weighted"
     assert solver.results.get("inner_constraints") is not None
     assert solver.results is not None
 
@@ -136,6 +136,6 @@ def test_solve_free_adj_robust(
 
     solver.solve()
 
-    assert solver.results.get("free_adjustment") == "huber"
+    assert solver.results.get("free_adj_method") == "huber"
     assert solver.results.get("inner_constraints") is not None
     assert solver.results is not None

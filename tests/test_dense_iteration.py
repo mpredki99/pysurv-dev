@@ -37,7 +37,7 @@ def test_calculate_increment_matrix(adjustment_test_matrices: Matrices) -> None:
     iteration = DenseIteration(adjustment_test_matrices)
     iteration.run()
 
-    assert iteration.point_weights is not None
+    assert iteration.coordinate_weights is not None
 
 
 def test_calculate_increment_matrix(adjustment_test_matrices: Matrices) -> None:
