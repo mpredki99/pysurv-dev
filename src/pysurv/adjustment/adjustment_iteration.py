@@ -16,6 +16,9 @@ class AdjustmentIteration(ABC):
         self._lsq_matrices = matrices
         self._counter = 0
 
+    def __bool__(self):
+        return self._counter > 0
+
     @property
     def counter(self):
         """Return the current iteration counter."""
@@ -29,7 +32,7 @@ class AdjustmentIteration(ABC):
 
     @property
     @abstractmethod
-    def inv_g_matrix(self):
+    def inv_matrix_G(self):
         """Return inverse of G matrix."""
         pass
 
@@ -89,7 +92,7 @@ class AdjustmentIteration(ABC):
 
     @property
     @abstractmethod
-    def point_weights(self):
+    def coordinate_weights(self):
         """Return the point weights."""
         pass
 
