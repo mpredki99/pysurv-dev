@@ -38,7 +38,7 @@ class DenseIteration(AdjustmentIteration):
         return self._matrix_g
 
     @property
-    def inv_g_matrix(self):
+    def inv_matrix_G(self):
         """Return inverse of G matrix."""
         return self._inv_matrix_G
 
@@ -55,16 +55,22 @@ class DenseIteration(AdjustmentIteration):
     @cached_property
     def coord_increments(self):
         """Return fitered for just coordinate increments."""
+        if self._increments is None:
+            return
         return self.increments[self._coord_idx]
 
     @cached_property
     def increment_matrix(self):
         """Return increment matrix."""
+        if self._increments is None:
+            return
         return self._get_increment_matrix()
 
     @cached_property
     def obs_residuals(self):
         """Return observation residuals."""
+        if self._increments is None:
+            return
         X = self._lsq_matrices.matrix_X
         Y = self._lsq_matrices.matrix_Y
         return X @ self.increments - Y
@@ -72,28 +78,61 @@ class DenseIteration(AdjustmentIteration):
     @cached_property
     def residual_variance(self):
         """Return residual variance."""
+        if self.obs_residuals is None:
+            return
         return self._get_residual_variance()
 
     @cached_property
     def covariance_X(self):
         """Return the covariance matrix of X."""
-        return self.residual_variance * self.inv_g_matrix
+        if self.residual_variance is None:
+            return
+        return self.residual_variance * self.inv_matrix_G
 
     @cached_property
     def covariance_Y(self):
         """Return the covariance matrix of Y."""
+        if self.covariance_X is None:
+            return
         X = self._lsq_matrices.matrix_X
         return X @ self.covariance_X @ X.T
 
     @cached_property
     def covariance_r(self):
         """Return the covariance matrix of residuals."""
+        if self.covariance_Y is None:
+            return
         return self._get_cov_r()
 
     @cached_property
-    def point_weights(self):
+    def coordinate_weights(self):
         """Return the point weights."""
-        return self._get_point_weights()
+        return self._get_coord_weights()
+
+    def run(self):
+        """Run a single iteration step."""
+        try:
+            matrix_g = self._get_matrix_g()
+            inv_matrix_G = pinv(matrix_g)
+            cross_product = self._get_cross_product()
+            increments = inv_matrix_G @ cross_product
+
+            self._reset_cache()
+
+            self._counter += 1
+            self._matrix_g = matrix_g
+            self._inv_matrix_G = inv_matrix_G
+            self._cross_product = cross_product
+            self._increments = increments
+
+            return True
+
+        except np.linalg.LinAlgError:
+            warn(
+                f"Calculations aborted due to SVD did not converge in {self._counter + 1}. iteration.",
+                SVDNotConvergeWarning,
+            )
+            return False
 
     def _get_coord_mask(self, coord_indices):
         """Return a boolean mask for valid coordinate indices."""
@@ -143,17 +182,23 @@ class DenseIteration(AdjustmentIteration):
         return increments_matrix
 
     def _get_residual_variance(self):
-        """Calculate the residual variance."""
+        """Get value of residual variance."""
+        if self._lsq_matrices.degrees_of_freedom > 0:
+            return self._calculate_residual_variance()
+        return 1
+
+    def _calculate_residual_variance(self):
+        """Calculate the residual variance value."""
         W = self._lsq_matrices.matrix_W
         k = self._lsq_matrices.degrees_of_freedom
         residuals = self.obs_residuals.reshape(-1)
 
-        if W is not None and k > 0:
-            return np.divide((residuals**2 * W.diagonal()).sum(), k)
-        elif W is None and k > 0:
-            return np.divide((residuals**2).sum(), k)
+        if W is not None:
+            squared_residuals = (residuals**2 * W.diagonal()).sum()
         else:
-            return 1
+            squared_residuals = (residuals**2).sum()
+
+        return np.divide(squared_residuals, k)
 
     def _get_cov_r(self):
         """Calculate covariance matrix of residuals."""
@@ -166,12 +211,13 @@ class DenseIteration(AdjustmentIteration):
 
         return weight_coffactor_matrix - self.covariance_Y
 
-    def _get_point_weights(self):
+    def _get_coord_weights(self):
         """Calculate the point weights from sW matrix."""
         sW = self._lsq_matrices.matrix_sW
-        if sW is not None:
-            return sW.diagonal()[self._coord_idx]
-        return
+        if sW is None:
+            return None
+
+        return sW.diagonal()[self._coord_idx]
 
     def _reset_cache(self):
         """Reset cached properties values."""
@@ -179,28 +225,3 @@ class DenseIteration(AdjustmentIteration):
             attr = getattr(self.__class__, name)
             if isinstance(attr, cached_property) and name in self.__dict__:
                 del self.__dict__[name]
-
-    def run(self):
-        """Run a single iteration step."""
-        try:
-            matrix_g = self._get_matrix_g()
-            inv_matrix_G = pinv(matrix_g)
-            cross_product = self._get_cross_product()
-            increments = inv_matrix_G @ cross_product
-
-            self._reset_cache()
-
-            self._counter += 1
-            self._matrix_g = matrix_g
-            self._inv_matrix_G = inv_matrix_G
-            self._cross_product = cross_product
-            self._increments = increments
-
-            return True
-
-        except np.linalg.LinAlgError:
-            warn(
-                f"Calculations aborted due to SVD did not converge in {self._counter + 1}. iteration.",
-                SVDNotConvergeWarning,
-            )
-            return False
