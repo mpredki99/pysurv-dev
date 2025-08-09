@@ -5,9 +5,6 @@
 # Full text of the license can be found in the LICENSE and COPYING files in the repository.
 
 from pysurv.adjustment.adjustment import Adjustment
-from pysurv.adjustment.matrices_dense import MatricesDense
-from pysurv.adjustment.method_manager_robust import MethodManagerRobust
-from pysurv.adjustment.solver import Solver
 from pysurv.data.dataset import Dataset
 
 from .config import config
@@ -34,29 +31,28 @@ class Project:
 
     def adjust(
         self,
-        observations: str = "weighted",
+        obs_adj: str = "weighted",
         obs_tuning_constants: dict | None = None,
         free_adjustment: str | None = None,
         free_adj_tuning_constants: dict | None = None,
         config_sigma_index: str | None = None,
         matrices_build_strategy: str | None = None,
         config_solver_index: str | None = None,
+        create_list_of_variances: bool = False,
     ) -> None:
         """Perform least squares adjustment."""
-        method_manager = MethodManagerRobust(
-            observations=observations,
+
+        self._adjustment = Adjustment(
+            self._dataset,
+            obs_adj=obs_adj,
             obs_tuning_constants=obs_tuning_constants,
             free_adjustment=free_adjustment,
             free_adj_tuning_constants=free_adj_tuning_constants,
-        )
-        matrices = MatricesDense(
-            self._dataset,
-            method_manager,
             config_sigma_index=config_sigma_index,
-            build_strategy=matrices_build_strategy,
+            matrices_build_strategy=matrices_build_strategy,
+            config_solver_index=config_solver_index,
+            create_list_of_variances=create_list_of_variances,
         )
-        solver = Solver(
-            self._dataset.controls, matrices, config_solver_index=config_solver_index
-        )
-        self._adjustment = Adjustment(solver)
-        return self._adjustment.solver.solve()
+
+        self._adjustment.solver.solve()
+        return self._adjustment.report
