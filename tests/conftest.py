@@ -13,9 +13,15 @@ import pandas as pd
 import pytest
 
 from pysurv import Dataset, config
-from pysurv.adjustment import DenseMatrices, config_sigma, config_solver
-from pysurv.adjustment.matrices import Matrices
+from pysurv.adjustment import (
+    DenseMatrices,
+    MethodManager,
+    Solver,
+    config_sigma,
+    config_solver,
+)
 from pysurv.adjustment.adjustment_method_manager import AdjustmentMethodManager
+from pysurv.adjustment.matrices import Matrices
 
 
 # Fixtures for restoring original state config objects
@@ -624,21 +630,21 @@ def MethodManagerTester():
     class CreateMethodManagerTester(AdjustmentMethodManager):
         def __init__(
             self,
-            observations: str = "weighted",
+            obs_adj: str = "weighted",
             obs_tuning_constants: dict | None = None,
             free_adjustment: str | None = None,
             free_adj_tuning_constants: dict | None = None,
         ) -> None:
             self._matrices = None
 
-            self._observations = observations
+            self._obs_adj = obs_adj
             self._obs_tuning_constants = obs_tuning_constants
             self._free_adjustment = free_adjustment
             self._free_adj_tuning_constants = free_adj_tuning_constants
 
         def _get_tuning_constants(
-            self, tuning_constants: dict | None, method: str | None
-        ) -> None:
+            self, tuning_constants: dict | None, method: str | None, type: str
+        ) -> dict | None:
             pass
 
     return CreateMethodManagerTester
@@ -647,8 +653,8 @@ def MethodManagerTester():
 @pytest.fixture
 def MatricesTester():
     """Fixture providing a test Matrices subclass."""
-    from pysurv.adjustment.matrices import Matrices
     from pysurv.adjustment.adjustment_method_manager import AdjustmentMethodManager
+    from pysurv.adjustment.matrices import Matrices
 
     class CreateMatricesTester(Matrices):
         def __init__(self, methods: AdjustmentMethodManager):
@@ -704,3 +710,18 @@ def adjustment_test_matrices(
 def strategies():
     """Returns names of the matrices construct strategies."""
     return ["speed", "memory_safe"]
+
+
+@pytest.fixture
+def MethodManagerConstructor():
+    return MethodManager
+
+
+@pytest.fixture
+def DenseMatricesConstructor():
+    return DenseMatrices
+
+
+@pytest.fixture
+def SolverConstructor():
+    return Solver
