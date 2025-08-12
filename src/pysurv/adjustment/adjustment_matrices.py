@@ -63,6 +63,10 @@ class AdjustmentMatrices(ABC):
         self._methods._inject_matrices(self)
 
     @property
+    def dataset(self):
+        return self._dataset
+
+    @property
     def methods(self):
         return self._methods
 
