@@ -6,23 +6,24 @@
 
 from abc import ABC, abstractmethod
 
-from pysurv.data.controls import Controls
+from ._constants import INVALID_INDEX
+import pandas as pd
 
 from .adjustment_matrices import AdjustmentMatrices
 from .config_solver import config_solver
 from .dense_iteration import DenseIteration
+from .adjustment_iteration import AdjustmentIteration
 
 
 class AdjustmentSolver(ABC):
     def __init__(
         self,
-        controls: Controls,
-        lsq_matrices: AdjustmentMatrices,
+        matrices: AdjustmentMatrices,
         config_solver_index: str | None = None,
         create_list_of_variances: bool = False,
     ) -> None:
-        self._controls = controls
-        self._matrices = lsq_matrices
+        self._matrices = matrices
+        self._controls = self.dataset.controls
         self._approx_coordinates = self._controls.coordinates.copy()
         self._create_list_of_variances = create_list_of_variances
         self._residual_variances = []
@@ -30,6 +31,10 @@ class AdjustmentSolver(ABC):
         self._n_movable_tie_points = self._get_n_movable_tie_points()
         self._config_solver = self._get_config_solver(config_solver_index)
         self._results = None
+        
+        self._obs_index = self._get_obs_index()
+        self._matrix_coord_index = self._get_matrix_coord_index()
+        self._matrix_index = self._get_matrix_index()
 
         self._iteration = self._get_lsq_iteration()
         self._matrices.methods._inject_solver(self)
@@ -42,6 +47,10 @@ class AdjustmentSolver(ABC):
     @property
     def methods(self):
         return self._matrices.methods
+
+    @property
+    def dataset(self):
+        return self._matrices.dataset
 
     @property
     def results(self):
@@ -170,20 +179,20 @@ class AdjustmentSolver(ABC):
             index = config_solver.default_index
         return config_solver[index]
 
-    def _get_n_movable_tie_points(self):
+    def _get_n_movable_tie_points(self) -> int:
         """Get number of movable reference points."""
         if self._matrices.matrix_sW is None:
             return self._count_movable_tie_points_from_indexer()
         return self._count_movable_tie_points_from_sw()
 
-    def _count_movable_tie_points_from_indexer(self):
+    def _count_movable_tie_points_from_indexer(self) -> int:
         """
         Count how many tie points are movable based on indexer object. If sW matrix is None
         (ordinary free adjustment), than all control points are movable tie points.
         """
         return self._matrices.indexer.coordinate_indices.max().max() + 1
 
-    def _count_movable_tie_points_from_sw(self):
+    def _count_movable_tie_points_from_sw(self) -> int:
         """
         Count how many tie points are movable based on control point weight matrix.
         If sW matrix is not None, than tie control points have non-zero weights.
@@ -191,7 +200,43 @@ class AdjustmentSolver(ABC):
         """
         sW = self._matrices.matrix_sW
         return sW.diagonal()[sW.diagonal() > 0].size
+    
+    def _get_obs_index(self) -> pd.MultiIndex:
+        """Return multiindex object to describe observation adjustment results."""
+        measurements = self.dataset.measurements
 
-    def _get_lsq_iteration(self):
+        index = measurements.stack(future_stack=True).index
+        names = list(index.names)
+        names[-1] = "column"
+        index.set_names(names, inplace=True)
+        return index
+
+    def _get_matrix_index(self) -> pd.MultiIndex:
+        """Return multiindex object to describe adjustment matrices."""
+        orient_index = self._get_matrix_orientation_index()
+        if orient_index is not None:
+            return self._matrix_coord_index.append(orient_index)
+        return self._matrix_coord_index
+
+    def _get_matrix_coord_index(self) -> pd.MultiIndex:
+        """Return multiindex object to describe coordinate indices in adjustment matrices."""
+        coordinate_mask = self._matrices.indexer.coordinate_indices != INVALID_INDEX
+        coordinate_indices = self._matrices.indexer.coordinate_indices[coordinate_mask]
+        return coordinate_indices.stack(future_stack=True).index
+
+    def _get_matrix_orientation_index(self) -> pd.MultiIndex | None:
+        """Return multiindex object to describe oreientation indices in adjustment matrices."""
+        index = self._matrices.indexer.orientation_indices
+        if index is None:
+            return
+
+        orientation_mask = index != INVALID_INDEX
+        orientation_indices = index[orientation_mask]
+        return pd.MultiIndex.from_arrays(
+            [orientation_indices.index, ["orientation"] * orientation_indices.size]
+        )
+
+
+    def _get_lsq_iteration(self) -> AdjustmentIteration:
         """Returns iteration object."""
         return DenseIteration(self._matrices)

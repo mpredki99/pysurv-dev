@@ -241,7 +241,7 @@ def test_cra_method_tuning_constants_after_solver_injection(
     """Test CRA method tuning constants after solver injection is not None."""
     method_manager = MethodManagerConstructor(obs_adj="cra", free_adjustment="cra")
     matrices = DenseMatricesConstructor(adjustment_test_dataset, method_manager)
-    solver = SolverConstructor(adjustment_test_dataset.controls, matrices)
+    solver = SolverConstructor(matrices)
     solver.iterate()
 
     obs_res_var = method_manager.obs_tuning_constants.get("res_var")
@@ -300,7 +300,7 @@ def test_t_method_tuning_constants_after_solver_injection(
     """Test 't' method tuning constants after solver injection is not None."""
     method_manager = MethodManagerConstructor(obs_adj="t", free_adjustment="t")
     matrices = DenseMatricesConstructor(adjustment_test_dataset, method_manager)
-    solver = SolverConstructor(adjustment_test_dataset.controls, matrices)
+    solver = SolverConstructor(matrices)
     solver.iterate()
 
     obs_k = method_manager.obs_tuning_constants.get("k")

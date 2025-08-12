@@ -13,8 +13,7 @@ def test_prepare_results(
     adjustment_test_matrices: AdjustmentMatrices, adjustment_test_dataset: Dataset
 ) -> None:
     """Test that beofre start calculations results are not generated."""
-    controls = adjustment_test_dataset.controls
-    solver = Solver(controls, adjustment_test_matrices)
+    solver = Solver(adjustment_test_matrices)
 
     assert solver.n_iter == 0
     assert solver.results is None
@@ -24,8 +23,7 @@ def test_iterate(
     adjustment_test_matrices: AdjustmentMatrices, adjustment_test_dataset: Dataset
 ) -> None:
     """Test that iterate method works properly."""
-    controls = adjustment_test_dataset.controls
-    solver = Solver(controls, adjustment_test_matrices)
+    solver = Solver(adjustment_test_matrices)
 
     solver.iterate()
 
@@ -37,10 +35,9 @@ def test_solve_observation_ordinary(
     adjustment_test_matrices: AdjustmentMatrices, adjustment_test_dataset: Dataset
 ) -> None:
     """Test that solve method works properly with observation ordinary method."""
-    controls = adjustment_test_dataset.controls
     matrices = adjustment_test_matrices
     matrices.methods.obs_adj = "ordinary"
-    solver = Solver(controls, adjustment_test_matrices)
+    solver = Solver(adjustment_test_matrices)
 
     assert solver.results is None
 
@@ -55,10 +52,9 @@ def test_solve_observation_weighted(
     adjustment_test_matrices: AdjustmentMatrices, adjustment_test_dataset: Dataset
 ) -> None:
     """Test that solve method works properly with observation weighted method."""
-    controls = adjustment_test_dataset.controls
     matrices = adjustment_test_matrices
     matrices.methods.obs_adj = "weighted"
-    solver = Solver(controls, adjustment_test_matrices)
+    solver = Solver(adjustment_test_matrices)
 
     assert solver.results is None
 
@@ -73,10 +69,9 @@ def test_solve_observation_robust(
     adjustment_test_matrices: AdjustmentMatrices, adjustment_test_dataset: Dataset
 ) -> None:
     """Test that solve method works properly with observation robust method."""
-    controls = adjustment_test_dataset.controls
     matrices = adjustment_test_matrices
     matrices.methods.obs_adj = "huber"
-    solver = Solver(controls, adjustment_test_matrices)
+    solver = Solver(adjustment_test_matrices)
 
     assert solver.results is None
 
@@ -91,10 +86,9 @@ def test_solve_free_adj_ordinary(
     adjustment_test_matrices: AdjustmentMatrices, adjustment_test_dataset: Dataset
 ) -> None:
     """Test that solve method works properly with free adjustment ordinary method."""
-    controls = adjustment_test_dataset.controls
     matrices = adjustment_test_matrices
     matrices.methods.free_adjustment = "ordinary"
-    solver = Solver(controls, adjustment_test_matrices)
+    solver = Solver(adjustment_test_matrices)
 
     assert solver.results is None
 
@@ -109,10 +103,9 @@ def test_solve_free_adj_weighted(
     adjustment_test_matrices: AdjustmentMatrices, adjustment_test_dataset: Dataset
 ) -> None:
     """Test that solve method works properly with free adjustment weighted method."""
-    controls = adjustment_test_dataset.controls
     matrices = adjustment_test_matrices
     matrices.methods.free_adjustment = "weighted"
-    solver = Solver(controls, adjustment_test_matrices)
+    solver = Solver(adjustment_test_matrices)
 
     assert solver.results is None
 
@@ -127,10 +120,9 @@ def test_solve_free_adj_robust(
     adjustment_test_matrices: AdjustmentMatrices, adjustment_test_dataset: Dataset
 ) -> None:
     """Test that solve method works properly with free adjustment robust method."""
-    controls = adjustment_test_dataset.controls
     matrices = adjustment_test_matrices
     matrices.methods.free_adjustment = "huber"
-    solver = Solver(controls, adjustment_test_matrices)
+    solver = Solver(adjustment_test_matrices)
 
     assert solver.results is None
 

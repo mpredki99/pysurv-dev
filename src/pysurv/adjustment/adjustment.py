@@ -44,7 +44,6 @@ class Adjustment:
             build_strategy=matrices_build_strategy,
         )
         self._solver = Solver(
-            self._dataset.controls,
             matrices,
             config_solver_index=config_solver_index,
             create_list_of_variances=create_list_of_variances,
@@ -71,5 +70,5 @@ class Adjustment:
     def report(self):
         """Return the adjustment report."""
         if self._solver.results is not None:
-            self._report = Report(self._solver.results)
+            self._report = Report(self._dataset, self._solver.results)
         return self._report
