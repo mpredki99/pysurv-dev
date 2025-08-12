@@ -4,6 +4,8 @@
 # Licensed under the GNU General Public License v3.0.
 # Full text of the license can be found in the LICENSE and COPYING files in the repository.
 
+from functools import cached_property
+
 import numpy as np
 import pandas as pd
 
@@ -25,24 +27,19 @@ class IndexerMatrixX:
         self._controls = dataset.controls
         self._stations = dataset.stations
 
-        self._coordinate_indices = None
-        self._orientation_indices = None
-
-    @property
+    @cached_property
     def coordinate_indices(self) -> pd.DataFrame:
         """Return a DataFrame mapping control points to their columns in matrix X."""
-        if self._coordinate_indices is None:
-            self._map_coordinate_index()
-        return self._coordinate_indices
+        return self._map_coordinate_index()
 
-    @property
+    @cached_property
     def orientation_indices(self) -> pd.Series:
         """Return a Series mapping station orientations to their columns in matrix X."""
-        if self._orientation_indices is None:
-            if self._coordinate_indices is None:
-                self._map_coordinate_index()
-            self._map_orientation_index()
-        return self._orientation_indices
+        if "orientation" not in self._stations.columns:
+            return
+
+        if self.coordinate_indices is not None:
+            return self._map_orientation_index()
 
     def _map_coordinate_index(self) -> None:
         """Map control point coordinates to their corresponding column indices in matrix X."""
@@ -55,19 +52,15 @@ class IndexerMatrixX:
         index_map = np.full(coord_values.shape, INVALID_INDEX, dtype=int)
         index_map[mask] = np.arange(np.count_nonzero(mask))
 
-        self._coordinate_indices = pd.DataFrame(
-            index_map, index=coord_idx, columns=coord_columns
-        )
+        return pd.DataFrame(index_map, index=coord_idx, columns=coord_columns)
 
     def _map_orientation_index(self) -> None:
         """Map station orientations to their corresponding column indices in matrix X."""
         orientations = self._stations.orientation.dropna()
 
-        start_idx = self._coordinate_indices.max().max() + 1
+        start_idx = self.coordinate_indices.max().max() + 1
         end_idx = start_idx + len(orientations)
 
         index_values = np.arange(start_idx, end_idx)
 
-        self._orientation_indices = pd.Series(
-            index_values, index=orientations.index, name="orientation_idx"
-        )
+        return pd.Series(index_values, index=orientations.index, name="orientation_idx")
