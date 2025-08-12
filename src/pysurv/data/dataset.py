@@ -48,7 +48,7 @@ class Dataset:
     ) -> pd.DataFrame:
         """Join measurements dataset with stations data."""
         joined_view = measurements_dataset.join(
-            self._stations, on="stn_pk", how="left", sort=True
+            self._stations.display(), on="stn_pk", how="left", sort=True
         )
         joined_view.set_index(
             self._stations.columns.tolist(), append=True, inplace=True
@@ -61,6 +61,7 @@ class Dataset:
                 "stn_id",
                 "stn_h",
                 "stn_sh",
+                "orientation",
                 "trg_id",
                 "trg_h",
                 "trg_sh",
